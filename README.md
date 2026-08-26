@@ -1,2 +1,1 @@
-# MalaStranApp
-26/08/26 - ripartiamo dalla versione funzionante Bolt
+<!-- LOVABLE_BUILD_TIMESTAMP: 2026-08-25T13:18:00Z - FORZA REFRESH -->
