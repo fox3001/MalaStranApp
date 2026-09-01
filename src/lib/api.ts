@@ -44,6 +44,10 @@ export async function createCollaborator(input: { nome: string; cognome: string;
   return request<{ success: true; user: { id: number; nome: string; cognome: string; username: string; email: string | null; role: "user" } }>("/api/admin/users", { method: "POST", body: JSON.stringify(input) });
 }
 
+export async function getAdminCollaborators() {
+  return request<{ success: true; users: Array<{ id: number; nome: string; cognome: string; username: string; email: string | null; ruolo: string; created_at: string }> }>("/api/admin/users");
+}
+
 export async function getAdminCollaborator(id: string) {
   return request<{ success: true; user: { id: number; nome: string; cognome: string; username: string; email: string | null; ruolo: string; created_at: string } }>(`/api/admin/users/${encodeURIComponent(id)}`);
 }
