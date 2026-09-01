@@ -54,39 +54,51 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const location = useLocation();
-  return <QueryClientProvider client={queryClient}><DemoProvider><ProtectedArea pathname={location.pathname} /><Toaster position="top-center" richColors closeButton /></DemoProvider></QueryClientProvider>;
+  return <QueryClientProvider client={queryClient}><ProtectedArea pathname={location.pathname} /><Toaster position="top-center" richColors closeButton /></QueryClientProvider>;
+}
+
+function AuthenticatedOutlet() {
+  return <DemoProvider><Outlet /></DemoProvider>;
 }
 
 function ProtectedArea({ pathname }: { pathname: string }) {
   const area = pathname.startsWith("/admin") ? "admin" : pathname.startsWith("/u") ? "collaborator" : null;
   const [checking, setChecking] = useState(Boolean(area));
   const [authenticated, setAuthenticated] = useState(false);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     let active = true;
-    setUsername(""); setPassword(""); setError("");
+    setError("");
     if (!area) { setChecking(false); setAuthenticated(true); return () => { active = false; }; }
     setChecking(true);
     validateSession().then((user) => {
       if (!active) return;
       setAuthenticated(Boolean(user && user.role === (area === "admin" ? "admin" : "user")));
       setChecking(false);
+    }).catch(() => {
+      if (!active) return;
+      clearAuth();
+      setAuthenticated(false);
+      setChecking(false);
     });
     return () => { active = false; };
   }, [area]);
 
-  if (!area || (authenticated && !checking)) return <Outlet />;
-  if (checking) return <main className="parchment-bg flex min-h-screen items-center justify-center"><p className="text-sm text-muted-foreground">Verifica accesso…</p></main>;
+  if (!area) return <AuthenticatedOutlet />;
+  if (checking) return <main className="parchment-bg fixed inset-0 z-[100] flex min-h-screen items-center justify-center"><p className="text-sm text-muted-foreground">Verifica accesso…</p></main>;
+  if (authenticated) return <AuthenticatedOutlet />;
 
   async function enter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setBusy(true); setError("");
+    setBusy(true);
+    setError("");
+    const formData = new FormData(event.currentTarget);
+    const username = String(formData.get("username") || "").trim();
+    const password = String(formData.get("password") || "");
     try {
-      const user = await login(username, password);
+      const user = await login(area === "admin" ? "admin" : username, password);
       if (user.role !== (area === "admin" ? "admin" : "user")) {
         clearAuth();
         throw new Error("Questo account non può accedere a quest'area.");
@@ -94,21 +106,25 @@ function ProtectedArea({ pathname }: { pathname: string }) {
       setAuthenticated(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Credenziali non valide");
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   }
 
-  return <main className="parchment-bg flex min-h-screen items-center justify-center px-6 py-10">
-    <form onSubmit={enter} className="w-full max-w-sm border border-border-strong bg-surface p-6 shadow-[var(--shadow-card)]">
+  return <main className="parchment-bg fixed inset-0 z-[100] flex min-h-screen items-center justify-center px-6 py-10" style={{ pointerEvents: "auto" }}>
+    <form onSubmit={enter} className="relative z-[101] w-full max-w-sm border border-border-strong bg-surface p-6 shadow-[var(--shadow-card)]" style={{ pointerEvents: "auto" }}>
       <p className="eyebrow text-accent">{area === "admin" ? "Ufficio & regia" : "Area collaboratore"}</p>
       <h1 className="mt-2 font-serif text-2xl text-primary">Accedi</h1>
       <p className="mt-2 text-sm text-muted-foreground">Inserisci username e password.</p>
       <Link to="/" className="mt-3 inline-flex text-sm text-accent hover:underline">Indietro</Link>
-      <label htmlFor="area-username" className="mt-5 block text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Username</label>
-      <input id="area-username" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" autoFocus className="mt-2 min-h-12 w-full border border-border-strong bg-background px-3 text-sm text-foreground outline-none focus:border-accent focus:ring-2 focus:ring-accent/30" placeholder={area === "admin" ? "admin" : "nome.cognome"} />
+      {area === "collaborator" && <>
+        <label htmlFor="area-username" className="mt-5 block text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Username</label>
+        <input id="area-username" name="username" type="text" defaultValue="" autoComplete="username" autoFocus className="mt-2 min-h-12 w-full border border-border-strong bg-background px-3 text-sm text-foreground outline-none focus:border-accent focus:ring-2 focus:ring-accent/30" placeholder="nome.cognome" style={{ pointerEvents: "auto", position: "relative", zIndex: 103 }} />
+      </>}
       <label htmlFor="area-password" className="mt-4 block text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Password</label>
-      <input id="area-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" className="mt-2 min-h-12 w-full border border-border-strong bg-background px-3 text-sm text-foreground outline-none focus:border-accent focus:ring-2 focus:ring-accent/30" />
+      <input id="area-password" name="password" type="password" defaultValue="" autoComplete="current-password" autoFocus={area === "admin"} tabIndex={0} className="mt-2 min-h-12 w-full border border-border-strong bg-background px-3 text-sm text-foreground outline-none focus:border-accent focus:ring-2 focus:ring-accent/30" style={{ pointerEvents: "auto", position: "relative", zIndex: 103 }} />
       {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
-      <button disabled={busy} type="submit" className="mt-4 min-h-11 w-full bg-primary px-4 text-sm font-semibold uppercase tracking-[0.08em] text-white disabled:opacity-60">{busy ? "Accesso…" : "Entra"}</button>
+      <button disabled={busy} type="submit" className="relative z-[102] mt-4 min-h-11 w-full bg-primary px-4 text-sm font-semibold uppercase tracking-[0.08em] text-white disabled:opacity-60">{busy ? "Accesso…" : "Entra"}</button>
     </form>
   </main>;
 }
