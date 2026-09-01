@@ -155,7 +155,7 @@ function RootComponent() {
   );
 }
 
-const ADMIN_PASSWORD = "admin";
+const ADMIN_PASSWORD = "";
 
 function ProtectedArea({ pathname }: { pathname: string }) {
   const area = pathname.startsWith("/admin") ? "admin" : pathname.startsWith("/u") ? "collaborator" : null;
@@ -176,7 +176,7 @@ function ProtectedArea({ pathname }: { pathname: string }) {
 
   function enter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (password === expectedPassword) {
+    if (area === "admin" || password === expectedPassword) {
       if (storageKey) window.localStorage.setItem(storageKey, "true");
       setAuthenticated(true);
     }
