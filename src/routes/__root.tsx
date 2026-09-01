@@ -23,7 +23,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({ meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5" }, { title: "Malastrana — Eventi senza tempo" }, { name: "description", content: "Gestionale interno Malastrana: eventi, disponibilità, costumi e bolle di carico." }, { name: "theme-color", content: "#F4F7F6" }, { name: "apple-mobile-web-app-capable", content: "yes" }, { name: "apple-mobile-web-app-title", content: "Malastrana" }, { name: "apple-mobile-web-app-status-bar-style", content: "default" }, { name: "mobile-web-app-capable", content: "yes" }, { property: "og:site_name", content: "Malastrana" }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }], links: [{ rel: "stylesheet", href: appCss }, { rel: "icon", href: "/favicon.ico", type: "image/x-icon" }, { rel: "manifest", href: "/manifest.webmanifest" }, { rel: "apple-touch-icon", href: "/icons/icon-192.png" }, { rel: "preconnect", href: "https://fonts.googleapis.com" }, { rel: "preconnect", href: "https://fonts.gstatic.com" }, { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Spectral:wght@300;400;500;600&display=swap" }] }),
+  head: () => ({ meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5" }, { title: "Malastrana — Eventi senza tempo" }, { name: "description", content: "Gestionale interno Malastrana: eventi, disponibilità, costumi e bolle di carico." }, { name: "theme-color", content: "#F4F7F6" }, { name: "apple-mobile-web-app-capable", content: "yes" }, { name: "apple-mobile-web-app-title", content: "Malastrana" }, { name: "apple-mobile-web-app-status-bar-style", content: "default" }, { name: "mobile-web-app-capable", content: "yes" }, { property: "og:site_name", content: "Malastrana" }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }], links: [{ rel: "stylesheet", href: appCss }, { rel: "icon", href: "/favicon.ico", type: "image/x-icon" }, { rel: "manifest", href: "/manifest.webmanifest" }, { rel: "apple-touch-icon", href: "/icons/icon-192.png" }, { rel: "preconnect", href: "https://fonts.googleapis.com" }, { rel: "preconnect", href: "https://fonts.gstatic.com" }, { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" }] }),
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -31,19 +31,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) { return <html lang="it"><head><HeadContent /></head><body>{children}<Scripts /></body></html>; }
-function RootComponent() { const { queryClient } = Route.useRouteContext(); const location = useLocation(); return <QueryClientProvider client={queryClient}><DemoProvider><ProtectedArea pathname={location.pathname} /></DemoProvider><Toaster position="top-center" richColors closeButton /></QueryClientProvider>; }
+function RootComponent() { const { queryClient } = Route.useRouteContext(); const location = useLocation(); return <QueryClientProvider client={queryClient}><ProtectedArea pathname={location.pathname} /><Toaster position="top-center" richColors closeButton /></QueryClientProvider>; }
+
+function AuthenticatedOutlet() {
+  return <DemoProvider><Outlet /></DemoProvider>;
+}
 
 function ProtectedArea({ pathname }: { pathname: string }) {
   const area = pathname.startsWith("/admin") ? "admin" : pathname.startsWith("/u") ? "collaborator" : null;
   const tokenKey = area === "admin" ? ADMIN_TOKEN_KEY : area === "collaborator" ? USER_TOKEN_KEY : null;
-  const [password, setPassword] = useState("");
-  const [username, setUsername] = useState("");
   const [authenticated, setAuthenticated] = useState(() => !area || Boolean(window.localStorage.getItem(tokenKey!)));
   const [checking, setChecking] = useState(Boolean(area && window.localStorage.getItem(tokenKey!)));
 
   useEffect(() => {
-    setPassword("");
-    setUsername("");
     if (!area || !tokenKey) { setAuthenticated(true); setChecking(false); return; }
     const token = window.localStorage.getItem(tokenKey);
     if (!token) { setAuthenticated(false); setChecking(false); return; }
@@ -60,13 +60,17 @@ function ProtectedArea({ pathname }: { pathname: string }) {
       .finally(() => setChecking(false));
   }, [area, tokenKey]);
 
-  if (!area || (authenticated && !checking)) return <Outlet />;
+  if (!area) return <AuthenticatedOutlet />;
   if (checking) return <main className="parchment-bg flex min-h-screen items-center justify-center px-6"><p className="text-sm text-muted-foreground">Verifica sessione…</p></main>;
+  if (authenticated) return <AuthenticatedOutlet />;
 
   async function enter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const username = String(formData.get("username") || "").trim();
+    const password = String(formData.get("password") || "");
     try {
-      const body = area === "admin" ? { username: "admin", password } : { username: username.trim(), password };
+      const body = area === "admin" ? { username: "admin", password } : { username, password };
       const response = await fetch(`${API_BASE_URL}/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const data = await response.json().catch(() => null);
       const expectedRole = area === "admin" ? "admin" : "user";
@@ -77,5 +81,5 @@ function ProtectedArea({ pathname }: { pathname: string }) {
     } catch (error) { toast.error(error instanceof Error ? error.message : "Impossibile effettuare il login"); }
   }
 
-  return <main className="parchment-bg relative z-0 flex min-h-screen items-center justify-center px-6 py-10"><form onSubmit={enter} className="relative z-50 w-full max-w-sm border border-border-strong bg-surface p-6 shadow-[var(--shadow-card)]" style={{ pointerEvents: "auto" }}><p className="eyebrow text-accent">{area === "admin" ? "Ufficio & regia" : "Area collaboratore"}</p><h1 className="mt-2 font-serif text-2xl text-primary">Accedi</h1><Link to="/" className="mt-4 inline-flex text-sm text-accent hover:underline">Indietro</Link>{area === "collaborator" && <><label htmlFor="area-username" className="mt-5 block text-sm text-foreground">Username</label><input id="area-username" name="username" type="text" value={username} onChange={(event) => setUsername(event.target.value)} autoFocus autoComplete="username" className="mt-1 min-h-12 w-full border border-border-strong bg-background px-3 text-sm text-foreground outline-none focus:border-accent focus:ring-2 focus:ring-accent/30" placeholder="nome.cognome" style={{ pointerEvents: "auto" }} /></>}<label htmlFor="area-password" className="mt-5 block text-sm text-foreground">Password</label><input id="area-password" name="password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoFocus={area === "admin"} autoComplete="current-password" className="mt-1 min-h-12 w-full border border-border-strong bg-background px-3 text-sm text-foreground outline-none focus:border-accent focus:ring-2 focus:ring-accent/30" style={{ pointerEvents: "auto", position: "relative", zIndex: 60 }} /><button type="submit" disabled={area === "collaborator" && (!username.trim() || !password)} className="relative z-50 mt-4 min-h-11 w-full bg-primary px-4 text-sm font-semibold uppercase tracking-[0.08em] text-white disabled:opacity-60">Entra</button></form></main>;
+  return <main className="parchment-bg fixed inset-0 z-[100] flex min-h-screen items-center justify-center px-6 py-10" style={{ pointerEvents: "auto" }}><form onSubmit={enter} className="relative z-[101] w-full max-w-sm border border-border-strong bg-surface p-6 shadow-[var(--shadow-card)]" style={{ pointerEvents: "auto" }}><p className="eyebrow text-accent">{area === "admin" ? "Ufficio & regia" : "Area collaboratore"}</p><h1 className="mt-2 font-serif text-2xl text-primary">Accedi</h1><Link to="/" className="mt-4 inline-flex text-sm text-accent hover:underline">Indietro</Link>{area === "collaborator" && <><label htmlFor="area-username" className="mt-5 block text-sm text-foreground">Username</label><input id="area-username" name="username" type="text" defaultValue="" autoFocus autoComplete="username" className="mt-1 min-h-12 w-full border border-border-strong bg-background px-3 text-sm text-foreground outline-none focus:border-accent focus:ring-2 focus:ring-accent/30" /></>}<label htmlFor="area-password" className="mt-5 block text-sm text-foreground">Password</label><input id="area-password" name="password" type="password" defaultValue="" autoFocus={area === "admin"} autoComplete="current-password" className="mt-1 min-h-12 w-full border border-border-strong bg-background px-3 text-sm text-foreground outline-none focus:border-accent focus:ring-2 focus:ring-accent/30" /><button type="submit" className="relative z-[102] mt-4 min-h-11 w-full bg-primary px-4 text-sm font-semibold uppercase tracking-[0.08em] text-white">Entra</button></form></main>;
 }
