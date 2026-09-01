@@ -9,13 +9,15 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { DemoProvider } from "../lib/store";
 import { CURRENT_USER } from "../data/demo";
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
+const ADMIN_TOKEN_KEY = "malastrana-admin-token";
 
 function NotFoundComponent() {
   return (
@@ -155,28 +157,77 @@ function RootComponent() {
   );
 }
 
-const ADMIN_PASSWORD = "";
-
 function ProtectedArea({ pathname }: { pathname: string }) {
   const area = pathname.startsWith("/admin") ? "admin" : pathname.startsWith("/u") ? "collaborator" : null;
   const storageKey = area ? `malastrana-${area}-access` : null;
   const [password, setPassword] = useState("");
-  const [authenticated, setAuthenticated] = useState(() =>
-    storageKey ? window.localStorage.getItem(storageKey) === "true" : true,
-  );
+  const [authenticated, setAuthenticated] = useState(() => {
+    if (!area) return true;
+    if (area === "admin") return Boolean(window.localStorage.getItem(ADMIN_TOKEN_KEY));
+    return window.localStorage.getItem(storageKey!) === "true";
+  });
 
   useEffect(() => {
     setPassword("");
+
+    if (area === "admin") {
+      const token = window.localStorage.getItem(ADMIN_TOKEN_KEY);
+      if (!token) {
+        setAuthenticated(false);
+        return;
+      }
+
+      fetch(`${API_BASE_URL}/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(async (response) => {
+          if (!response.ok) throw new Error("Sessione non valida");
+          const data = await response.json();
+          if (data?.success && data?.user?.role === "admin") {
+            setAuthenticated(true);
+          } else {
+            throw new Error("Accesso amministratore richiesto");
+          }
+        })
+        .catch(() => {
+          window.localStorage.removeItem(ADMIN_TOKEN_KEY);
+          setAuthenticated(false);
+        });
+      return;
+    }
+
     setAuthenticated(storageKey ? window.localStorage.getItem(storageKey) === "true" : true);
-  }, [storageKey]);
+  }, [area, storageKey]);
 
   if (!area || authenticated) return <Outlet />;
 
-  const expectedPassword = area === "admin" ? ADMIN_PASSWORD : CURRENT_USER.password;
+  const expectedPassword = CURRENT_USER.password;
 
-  function enter(event: FormEvent<HTMLFormElement>) {
+  async function enter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (area === "admin" || password === expectedPassword) {
+
+    if (area === "admin") {
+      try {
+        const response = await fetch(`${API_BASE_URL}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: "admin", password }),
+        });
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok || !data?.success || !data?.token || data?.user?.role !== "admin") {
+          throw new Error(data?.error || "Credenziali non valide");
+        }
+
+        window.localStorage.setItem(ADMIN_TOKEN_KEY, data.token);
+        setAuthenticated(true);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Impossibile effettuare il login");
+      }
+      return;
+    }
+
+    if (password === expectedPassword) {
       if (storageKey) window.localStorage.setItem(storageKey, "true");
       setAuthenticated(true);
     }
