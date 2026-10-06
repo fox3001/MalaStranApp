@@ -1,291 +1,452 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft, ShieldCheck, UserRound, CheckCircle2, Circle, Star, MapPin, Calendar, Clock, Phone, FileText, Search, X } from "lucide-react";
-import { getEventByCode, getAvailabilityForEvent, confirmAnimator, unconfirmAnimator } from "../data/demo";
-import { useDemo } from "@/lib/store";
-import { useMemo, useState } from "react";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { AlertTriangle, Check, MessageSquare, Pencil, Trash2, UserPlus, X } from "lucide-react";
+import { useMemo, useState, type FormEvent } from "react";
+import { AppShell } from "@/components/AppShell";
+import { BollaImport, type ImportRow } from "@/components/BollaImport";
+import { EventForm } from "@/components/EventForm";
+import { Button, Card, ErrorBox, Field, Loading, ParticipantTag, SectionTitle, StatusTag } from "@/components/ui-kit";
+import { useAdminEvent, useAdminUsers, useApiMutation, type LoadRow, type MalEvent, type Participant, type ParticipantStatus } from "@/lib/api";
+import { formatDateLong, timeRange } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/admin/eventi/$code")({
-  component: AdminEventDetail,
-});
+export const Route = createFileRoute("/admin/eventi/$code")({ component: EventoAdmin });
 
-function AdminEventDetail() {
+type Tab = "info" | "persone" | "bolla";
+
+function EventoAdmin() {
   const { code } = Route.useParams();
-  const event = getEventByCode(code);
-  const availability = getAvailabilityForEvent(code);
-  const { collaborators } = useDemo();
-  const [searchQuery, setSearchQuery] = useState("");
+  const q = useAdminEvent(code);
+  const [tab, setTab] = useState<Tab>("persone");
 
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    const q = searchQuery.toLowerCase().trim();
-    return collaborators.filter((c) => {
-      const haystack = [
-        c.name,
-        c.role,
-        c.bio,
-        ...c.skills,
-        ...c.skillsDetail.map((s) => s.name),
-        ...c.proposedSkills,
-        ...c.personalCostumes.flatMap((pc) => [pc.name, pc.category, ...pc.tags]),
-        ...c.personalPhotos.flatMap((ph) => [ph.caption || "", ...ph.tags]),
-      ]
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(q);
-    });
-  }, [collaborators, searchQuery]);
+  return (
+    <AppShell area="admin" title={q.data?.event.nome ?? "Evento"} back="/admin/eventi">
+      {q.isLoading ? (
+        <Loading />
+      ) : q.isError || !q.data ? (
+        <div className="mt-6">
+          <ErrorBox error={q.error} onRetry={() => void q.refetch()} />
+        </div>
+      ) : (
+        <>
+          <section className="pt-5">
+            <p className="eyebrow text-accent">{q.data.event.code}</p>
+            <h2 className="mt-1 font-serif text-2xl text-primary">{q.data.event.nome}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {formatDateLong(q.data.event.data)} · {timeRange(q.data.event.ora_inizio, q.data.event.ora_fine)}
+              {q.data.event.luogo && ` · ${q.data.event.luogo}`}
+            </p>
+            <div className="mt-2">
+              <StatusTag status={q.data.event.stato} />
+            </div>
+          </section>
 
-  if (!event) {
+          <div className="mt-5 grid grid-cols-3 gap-1 rounded-lg border border-border bg-surface p-1">
+            {(
+              [
+                ["persone", `Persone (${q.data.participants.length})`],
+                ["bolla", `Bolla (${q.data.load_rows.length})`],
+                ["info", "Dettagli"],
+              ] as Array<[Tab, string]>
+            ).map(([k, label]) => (
+              <button key={k} type="button" onClick={() => setTab(k)} className={cn("min-h-10 rounded-md text-xs font-semibold uppercase tracking-[0.06em]", tab === k ? "bg-accent text-accent-foreground" : "text-muted-foreground")}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-5">
+            {tab === "info" && <InfoTab event={q.data.event} />}
+            {tab === "persone" && <PeopleTab code={code} participants={q.data.participants} />}
+            {tab === "bolla" && <BollaTab code={code} rows={q.data.load_rows} participants={q.data.participants} />}
+          </div>
+        </>
+      )}
+    </AppShell>
+  );
+}
+
+/* ----------------------------- Dettagli ----------------------------- */
+
+function InfoTab({ event }: { event: MalEvent }) {
+  const router = useRouter();
+  const [editing, setEditing] = useState(false);
+  const save = useApiMutation<Partial<MalEvent>>("admin", (body) => ({ path: `/admin/events/${event.code}`, method: "PATCH", body }), {
+    success: "Evento aggiornato: gli user coinvolti hanno ricevuto una notifica",
+    invalidate: [["events"]],
+  });
+  const remove = useApiMutation<void>("admin", () => ({ path: `/admin/events/${event.code}`, method: "DELETE" }), { success: "Evento eliminato", invalidate: [["events"]] });
+
+  if (editing)
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-6 text-center">
-        <p className="text-muted-foreground">Evento non trovato.</p>
-        <Link to="/admin/eventi" className="mt-4 text-sm text-primary hover:underline">
-          Torna agli eventi
-        </Link>
-      </div>
+      <EventForm
+        initial={event}
+        submitLabel="Salva modifiche"
+        busy={save.isPending}
+        onSubmit={(v) => save.mutate(v, { onSuccess: () => setEditing(false) })}
+      />
+    );
+
+  return (
+    <div className="grid gap-5">
+      <Card>
+        <Field label="Ritrovo">{event.ora_ritrovo || "—"}</Field>
+        <Field label="Orario">{timeRange(event.ora_inizio, event.ora_fine)}</Field>
+        <Field label="Luogo">{event.luogo || "—"}</Field>
+        <Field label="Tipo">{event.tipo || "—"}</Field>
+        <Field label="Descrizione">{event.descrizione || "—"}</Field>
+      </Card>
+      <Card>
+        <SectionTitle>Per gli user confermati</SectionTitle>
+        <Field label="Info operative">{event.info_operative || "—"}</Field>
+        <Field label="Referente">{[event.referente_nome, event.referente_telefono].filter(Boolean).join(" · ") || "—"}</Field>
+        <Field label="Compenso">
+          {event.compenso || "—"} {event.compenso && <span className="text-xs text-muted-foreground">({event.compenso_visibile ? "visibile ai confermati" : "nascosto"})</span>}
+        </Field>
+      </Card>
+      {event.note_admin && (
+        <Card>
+          <Field label="Note interne">{event.note_admin}</Field>
+        </Card>
+      )}
+      {event.stato === "annullato" && event.motivo_annullamento && (
+        <Card className="border-destructive/40">
+          <Field label="Annullato">{event.motivo_annullamento}</Field>
+        </Card>
+      )}
+      <Button type="button" variant="outline" onClick={() => setEditing(true)}>
+        <Pencil className="h-4 w-4" /> Modifica evento
+      </Button>
+      <Button
+        type="button"
+        variant="danger"
+        disabled={remove.isPending}
+        onClick={() => {
+          if (window.confirm(`Eliminare definitivamente "${event.nome}" con persone, bolla e notifiche collegate? Se vuoi solo avvisare che non si fa più, usa lo stato «Annullato».`))
+            remove.mutate(undefined, { onSuccess: () => void router.navigate({ to: "/admin/eventi" }) });
+        }}
+      >
+        <Trash2 className="h-4 w-4" /> Elimina evento
+      </Button>
+    </div>
+  );
+}
+
+/* ------------------------------ Persone ----------------------------- */
+
+const ORDER: ParticipantStatus[] = ["available", "confirmed", "pending", "unavailable", "rejected"];
+
+function PeopleTab({ code, participants }: { code: string; participants: Participant[] }) {
+  const users = useAdminUsers();
+  const [picking, setPicking] = useState(false);
+  const [selected, setSelected] = useState<number[]>([]);
+  const [search, setSearch] = useState("");
+  const invite = useApiMutation<number[]>("admin", (ids) => ({ path: `/admin/events/${code}/participants`, method: "POST", body: { user_ids: ids } }), {
+    success: "Richiesta di disponibilità inviata",
+    invalidate: [["events"], ["users"]],
+  });
+  const decide = useApiMutation<{ userId: number; stato?: ParticipantStatus; ruolo_evento?: string }>(
+    "admin",
+    ({ userId, ...body }) => ({ path: `/admin/events/${code}/participants/${userId}`, method: "PATCH", body }),
+    { invalidate: [["events"], ["users"]] },
+  );
+  const removeP = useApiMutation<number>("admin", (userId) => ({ path: `/admin/events/${code}/participants/${userId}`, method: "DELETE" }), { invalidate: [["events"], ["users"]] });
+
+  const invited = new Set(participants.map((p) => p.user_id));
+  const candidates = (users.data?.users ?? []).filter((u) => u.attivo && !invited.has(u.id)).filter((u) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return [u.nome, u.cognome, u.username, u.qualifica, ...u.competenze, ...(u.costumi ?? [])].join(" ").toLowerCase().includes(q);
+  });
+  const sorted = useMemo(() => [...participants].sort((a, b) => ORDER.indexOf(a.stato) - ORDER.indexOf(b.stato)), [participants]);
+  const counts = ORDER.map((s) => [s, participants.filter((p) => p.stato === s).length] as const).filter(([, n]) => n > 0);
+
+  return (
+    <div className="grid gap-5">
+      {counts.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {counts.map(([s, n]) => (
+            <span key={s} className="flex items-center gap-1">
+              <ParticipantTag status={s} /> <span className="text-xs text-muted-foreground">{n}</span>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {sorted.length === 0 ? (
+        <Card>
+          <p className="text-sm text-muted-foreground">Nessuno user coinvolto. Usa «Invita user» per chiedere la disponibilità.</p>
+        </Card>
+      ) : (
+        <ul className="overflow-hidden rounded-xl border border-border bg-card shadow-[var(--shadow-card)]">
+          {sorted.map((p) => (
+            <li key={p.user_id} className="border-b border-border px-4 py-3 last:border-b-0">
+              <div className="flex items-start justify-between gap-2">
+                <Link to="/admin/collaboratori/$id" params={{ id: String(p.user_id) }} className="min-w-0">
+                  <span className="block truncate font-serif text-base text-foreground">
+                    {p.nome} {p.cognome}
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">{p.ruolo_evento || p.qualifica || `@${p.username}`}</span>
+                </Link>
+                <ParticipantTag status={p.stato} />
+              </div>
+              {p.nota_user && (
+                <p className="mt-2 flex items-start gap-1.5 rounded-md bg-muted px-2 py-1.5 text-xs text-foreground">
+                  <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {p.nota_user}
+                </p>
+              )}
+              <div className="mt-2 flex flex-wrap gap-2">
+                {p.stato !== "confirmed" && (
+                  <SmallBtn tone="ok" onClick={() => decide.mutate({ userId: p.user_id, stato: "confirmed" })}>
+                    <Check className="h-3.5 w-3.5" /> Conferma
+                  </SmallBtn>
+                )}
+                {p.stato !== "rejected" && (
+                  <SmallBtn tone="no" onClick={() => decide.mutate({ userId: p.user_id, stato: "rejected" })}>
+                    <X className="h-3.5 w-3.5" /> Non selezionare
+                  </SmallBtn>
+                )}
+                {(p.stato === "confirmed" || p.stato === "rejected") && (
+                  <SmallBtn onClick={() => decide.mutate({ userId: p.user_id, stato: "pending" })}>Riapri risposta</SmallBtn>
+                )}
+                <SmallBtn
+                  onClick={() => {
+                    const r = window.prompt("Ruolo in questo evento (es. Capitano, Strega, Accoglienza):", p.ruolo_evento ?? "");
+                    if (r !== null) decide.mutate({ userId: p.user_id, ruolo_evento: r });
+                  }}
+                >
+                  Ruolo
+                </SmallBtn>
+                <SmallBtn
+                  onClick={() => {
+                    if (window.confirm(`Togliere ${p.nome} ${p.cognome} da questo evento?`)) removeP.mutate(p.user_id);
+                  }}
+                >
+                  Togli
+                </SmallBtn>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {picking ? (
+        <Card className="grid gap-3">
+          <SectionTitle>Invita user</SectionTitle>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Filtra per nome, competenza, costume…"
+            className="min-h-11 rounded-lg border border-border-strong bg-surface px-3 text-sm outline-none focus:border-accent"
+          />
+          {candidates.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{(users.data?.users.length ?? 0) === 0 ? "Non ci sono user: creali prima dalla rubrica." : "Nessun altro user da invitare."}</p>
+          ) : (
+            <ul className="max-h-72 overflow-auto">
+              {candidates.map((u) => (
+                <li key={u.id}>
+                  <label className="flex min-h-11 items-center gap-3 border-b border-border py-2 text-sm last:border-b-0">
+                    <input type="checkbox" className="h-5 w-5" checked={selected.includes(u.id)} onChange={(e) => setSelected((s) => (e.target.checked ? [...s, u.id] : s.filter((x) => x !== u.id)))} />
+                    <span className="min-w-0">
+                      <span className="block">
+                        {u.nome} {u.cognome}
+                      </span>
+                      {u.competenze.length > 0 && <span className="block truncate text-xs text-muted-foreground">{u.competenze.join(", ")}</span>}
+                    </span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              className="flex-1"
+              disabled={!selected.length || invite.isPending}
+              onClick={() =>
+                invite.mutate(selected, {
+                  onSuccess: () => {
+                    setSelected([]);
+                    setPicking(false);
+                  },
+                })
+              }
+            >
+              Invia richiesta ({selected.length})
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setPicking(false)}>
+              Chiudi
+            </Button>
+          </div>
+        </Card>
+      ) : (
+        <Button type="button" onClick={() => setPicking(true)}>
+          <UserPlus className="h-4 w-4" /> Invita user
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function SmallBtn({ children, onClick, tone }: { children: React.ReactNode; onClick: () => void; tone?: "ok" | "no" }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "inline-flex min-h-9 items-center gap-1 rounded-lg border px-2.5 text-xs font-semibold",
+        tone === "ok" ? "border-success/50 bg-success/10 text-success" : tone === "no" ? "border-destructive/40 text-destructive" : "border-border-strong text-muted-foreground",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+/* ------------------------------- Bolla ------------------------------ */
+
+function BollaTab({ code, rows, participants }: { code: string; rows: LoadRow[]; participants: Participant[] }) {
+  const [importKey, setImportKey] = useState(0);
+  const add = useApiMutation<Record<string, unknown>>("admin", (body) => ({ path: `/admin/events/${code}/load-rows`, method: "POST", body }), {
+    success: "Bolla aggiornata",
+    invalidate: [["events"], ["report"]],
+  });
+  const patch = useApiMutation<{ id: number } & Partial<Record<string, unknown>>>("admin", ({ id, ...body }) => ({ path: `/admin/load-rows/${id}`, method: "PATCH", body }), {
+    invalidate: [["events"], ["report"]],
+  });
+  const del = useApiMutation<number>("admin", (id) => ({ path: `/admin/load-rows/${id}`, method: "DELETE" }), { invalidate: [["events"], ["report"]] });
+  const assignable = participants.filter((p) => p.stato !== "rejected" && p.stato !== "unavailable");
+
+  function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const f = new FormData(form);
+    const assigned = Number(f.get("assigned"));
+    add.mutate(
+      {
+        item: String(f.get("item") || ""),
+        categoria: String(f.get("categoria") || ""),
+        codice: String(f.get("codice") || ""),
+        taglia: String(f.get("taglia") || ""),
+        quantita: Number(f.get("quantita") || 1),
+        assigned_user_id: assigned > 0 ? assigned : null,
+      },
+      { onSuccess: () => form.reset() },
     );
   }
 
-  const proposed = availability.filter((a) => a.proposed);
-  const confirmed = proposed.filter((a) => a.confirmed);
-
-  function toggleConfirmed(userId: string, currentlyConfirmed: boolean) {
-    if (currentlyConfirmed) {
-      unconfirmAnimator(code, userId);
-    } else {
-      const entry = availability.find((a) => a.userId === userId);
-      confirmAnimator(code, userId, entry?.isTL ?? false);
-    }
-  }
-
-  function toggleTL(userId: string, currentlyTL: boolean) {
-    const entry = availability.find((a) => a.userId === userId);
-    if (!entry) return;
-    entry.isTL = !currentlyTL;
-  }
+  const issues = rows.filter((r) => r.damaged || r.comment).length;
+  const input = "min-h-11 w-full rounded-lg border border-border-strong bg-surface px-3 text-sm outline-none focus:border-accent";
 
   return (
-    <main className="mx-auto min-h-screen max-w-3xl px-6 py-10">
-      <Link to="/admin/eventi" className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-        <ChevronLeft className="h-4 w-4" />
-        Torna agli eventi
-      </Link>
-
-      <header className="mb-8">
-        <h1 className="font-serif text-3xl text-primary">{event.name}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Modifica solo da admin</p>
-      </header>
-
-      <section className="mb-10 rounded-lg border bg-card p-5 shadow-sm">
-        <h2 className="mb-4 text-base font-semibold uppercase tracking-[0.08em]">Dettagli Evento</h2>
-        <div className="space-y-3 text-sm">
-          <div className="flex items-center gap-3">
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">Luogo:</span>
-            <input type="text" defaultValue={event.place} className="flex-1 rounded-md border bg-background px-2 py-1 text-foreground" />
-          </div>
-          <div className="flex items-center gap-3">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">Data:</span>
-            <input type="date" defaultValue={event.date} className="flex-1 rounded-md border bg-background px-2 py-1 text-foreground" />
-          </div>
-          <div className="flex items-center gap-3">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">Ritrovo:</span>
-            <input type="time" defaultValue={event.meetTime} className="flex-1 rounded-md border bg-background px-2 py-1 text-foreground" />
-          </div>
-          <div className="flex items-center gap-3">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">Inizio:</span>
-            <input type="time" defaultValue={event.timeStart} className="flex-1 rounded-md border bg-background px-2 py-1 text-foreground" />
-          </div>
-          <div className="flex items-center gap-3">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">Fine:</span>
-            <input type="time" defaultValue={event.timeEnd} className="flex-1 rounded-md border bg-background px-2 py-1 text-foreground" />
-          </div>
-          <div className="flex items-center gap-3">
-            <Phone className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">Contatto:</span>
-            <input type="text" defaultValue={event.contactName} placeholder="Nome" className="w-1/3 rounded-md border bg-background px-2 py-1 text-foreground" />
-            <a href={`tel:${event.contactPhone}`} className="flex-1 rounded-md border bg-background px-2 py-1 text-primary hover:underline">
-              {event.contactPhone}
-            </a>
-          </div>
-          <div className="flex items-start gap-3">
-            <FileText className="mt-0.5 h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">Note:</span>
-            <textarea defaultValue={event.notes} rows={3} className="flex-1 rounded-md border bg-background px-2 py-1 text-foreground" />
-          </div>
+    <div className="grid gap-5">
+      {rows.length > 0 && (
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <Counter label="Presenti" value={`${rows.filter((r) => r.present).length}/${rows.length}`} />
+          <Counter label="Rientrati" value={`${rows.filter((r) => r.returned).length}/${rows.length}`} />
+          <Counter label="Segnalazioni" value={String(issues)} warn={issues > 0} />
         </div>
-      </section>
+      )}
 
-      {/* Collaborator search */}
-      <section className="mb-10 rounded-lg border bg-card p-5 shadow-sm">
-        <div className="mb-4 flex items-center gap-2">
-          <Search className="h-5 w-5 text-accent" strokeWidth={1.5} />
-          <h2 className="text-base font-semibold uppercase tracking-[0.08em]">Cerca collaboratori</h2>
-        </div>
-        <p className="mb-3 text-sm text-muted-foreground">
-          Cerca tra tutti i collaboratori per nome, competenze, costumi, tag o foto. Clicca su un risultato per aggiungerlo agli animatori proposti.
-        </p>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" strokeWidth={1.5} />
-          <input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Es. #pirata, combattimento, Elena, medievale..."
-            className="w-full rounded-lg border border-border bg-background py-2.5 pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              aria-label="Cancella ricerca"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
+      {rows.length === 0 ? (
+        <Card>
+          <p className="text-sm text-muted-foreground">La bolla è vuota. Aggiungi gli oggetti qui sotto o importali da un file Excel.</p>
+        </Card>
+      ) : (
+        <ul className="overflow-hidden rounded-xl border border-border bg-card shadow-[var(--shadow-card)]">
+          {rows.map((r) => (
+            <li key={r.id} className={cn("border-b border-border px-4 py-3 last:border-b-0", r.damaged && "bg-destructive/5")}>
+              <div className="flex items-start justify-between gap-2">
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium text-foreground">
+                    {r.quantita > 1 && `${r.quantita}× `}
+                    {r.item}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">{[r.categoria, r.codice, r.taglia && `tg ${r.taglia}`].filter(Boolean).join(" · ") || "—"}</span>
+                </span>
+                <button type="button" aria-label="Elimina riga" onClick={() => window.confirm(`Togliere "${r.item}" dalla bolla?`) && del.mutate(r.id)} className="rounded p-1.5 text-muted-foreground">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+              <select
+                value={r.assigned_user_id ?? 0}
+                onChange={(e) => patch.mutate({ id: r.id, assigned_user_id: Number(e.target.value) || null })}
+                className="mt-2 min-h-9 w-full rounded-md border border-border bg-surface px-2 text-xs"
+              >
+                <option value={0}>Non assegnato</option>
+                {assignable.map((p) => (
+                  <option key={p.user_id} value={p.user_id}>
+                    {p.nome} {p.cognome}
+                  </option>
+                ))}
+              </select>
+              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                <Flag label="Presente" on={r.present} onClick={() => patch.mutate({ id: r.id, present: !r.present })} />
+                <Flag label="Rientrato" on={r.returned} onClick={() => patch.mutate({ id: r.id, returned: !r.returned })} />
+                <Flag label="Danni" on={r.damaged} danger onClick={() => patch.mutate({ id: r.id, damaged: !r.damaged })} />
+              </div>
+              {r.comment && (
+                <p className="mt-2 flex items-start gap-1.5 rounded-md bg-muted px-2 py-1.5 text-xs">
+                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" /> {r.comment}
+                </p>
+              )}
+              {r.updated_by && r.updated_by !== "admin" && <p className="mt-1 text-[11px] text-muted-foreground">Ultima modifica: {r.updated_by}</p>}
+            </li>
+          ))}
+        </ul>
+      )}
 
-        {searchQuery.trim() && (
-          <div className="mt-4">
-            {searchResults.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nessun collaboratore trovato.</p>
-            ) : (
-              <ul className="space-y-2">
-                {searchResults.map((c) => {
-                  const alreadyProposed = availability.some((a) => a.userId === c.id);
-                  return (
-                    <li key={c.id}>
-                      <button
-                        onClick={() => {
-                          if (!alreadyProposed) {
-                            confirmAnimator(code, c.id, false);
-                            setSearchQuery("");
-                          }
-                        }}
-                        disabled={alreadyProposed}
-                        className={cn(
-                          "flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-all",
-                          alreadyProposed
-                            ? "border-border bg-muted/50 opacity-60"
-                            : "border-border bg-background hover:border-accent hover:bg-accent/5 active:scale-[0.99]",
-                        )}
-                      >
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
-                          <UserRound className="h-5 w-5" strokeWidth={1.5} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-foreground">{c.name}</p>
-                          <p className="truncate text-xs text-muted-foreground">{c.role}</p>
-                          {c.skillsDetail.length > 0 && (
-                            <p className="mt-0.5 truncate text-[11px] text-accent">
-                              {c.skillsDetail.map((s) => s.name).join(" · ")}
-                            </p>
-                          )}
-                          {c.personalCostumes.length > 0 && (
-                            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                              Costumi: {c.personalCostumes.map((pc) => pc.name).join(", ")}
-                            </p>
-                          )}
-                        </div>
-                        {alreadyProposed ? (
-                          <span className="shrink-0 text-xs font-medium text-muted-foreground">Già proposto</span>
-                        ) : (
-                          <span className="shrink-0 text-xs font-medium text-accent">+ Aggiungi</span>
-                        )}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+      <Card>
+        <SectionTitle>Aggiungi oggetto</SectionTitle>
+        <form onSubmit={submit} className="grid gap-2">
+          <input name="item" required placeholder="Oggetto / costume *" className={input} />
+          <div className="grid grid-cols-2 gap-2">
+            <input name="categoria" placeholder="Categoria" className={input} />
+            <input name="codice" placeholder="Codice" className={input} />
           </div>
-        )}
-      </section>
-
-      <section className="mb-10 rounded-lg border bg-card p-5 shadow-sm">
-        <div className="mb-4 flex items-center gap-2">
-          <UserRound className="h-5 w-5 text-accent" strokeWidth={1.5} />
-          <h2 className="text-base font-semibold uppercase tracking-[0.08em]">Animatori proposti</h2>
-        </div>
-        {proposed.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nessun animatore proposto per questo evento. Usa la ricerca sopra per aggiungerne.</p>
-        ) : (
-          <ul className="space-y-3">
-            {proposed.map((a) => {
-              const isConfirmed = !!a.confirmed;
-              const isTL = !!a.isTL;
-              return (
-                <li key={a.userId} className="flex items-center justify-between rounded-md border p-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent/10 text-accent">
-                      <UserRound className="h-5 w-5" strokeWidth={1.5} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{a.name}</p>
-                      <p className="text-xs text-muted-foreground">Disponibile per questo evento</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <button onClick={() => toggleConfirmed(a.userId, isConfirmed)} className="flex items-center gap-1.5 text-xs font-medium hover:underline" title={isConfirmed ? "Rimuovi conferma" : "Conferma animatore"}>
-                      {isConfirmed ? (
-                        <>
-                          <CheckCircle2 className="h-4 w-4 text-primary" />
-                          <span className="text-primary">Confermato</span>
-                        </>
-                      ) : (
-                        <>
-                          <Circle className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">Da confermare</span>
-                        </>
-                      )}
-                    </button>
-                    <button onClick={() => toggleTL(a.userId, isTL)} className="flex items-center gap-1.5 text-xs font-medium hover:underline" title={isTL ? "Rimuovi Team Leader" : "Segna come Team Leader"}>
-                      <Star className={`h-4 w-4 ${isTL ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
-                      <span className={isTL ? "text-yellow-400" : "text-muted-foreground"}>TL</span>
-                    </button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
-
-      <section className="mb-10 rounded-lg border bg-card p-5 shadow-sm">
-        <div className="mb-4 flex items-center gap-2">
-          <ShieldCheck className="h-5 w-5 text-primary" strokeWidth={1.5} />
-          <h2 className="text-base font-semibold uppercase tracking-[0.08em]">Animatori confermati</h2>
-        </div>
-        {confirmed.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nessun animatore confermato per questo evento.</p>
-        ) : (
-          <ul className="space-y-3">
-            {confirmed.map((a) => (
-              <li key={a.userId} className="flex items-center justify-between rounded-md border p-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <ShieldCheck className="h-5 w-5" strokeWidth={1.5} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">{a.name}</p>
-                    <p className="text-xs text-muted-foreground">Confermato per questo evento</p>
-                  </div>
-                </div>
-                {a.isTL && (
-                  <div className="flex items-center gap-1.5 rounded-full bg-yellow-400/15 px-2.5 py-1 text-xs font-medium text-yellow-500">
-                    <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                    Team Leader
-                  </div>
-                )}
-              </li>
+          <div className="grid grid-cols-2 gap-2">
+            <input name="taglia" placeholder="Taglia" className={input} />
+            <input name="quantita" type="number" min={1} defaultValue={1} className={input} />
+          </div>
+          <select name="assigned" defaultValue={0} className={input}>
+            <option value={0}>Non assegnato</option>
+            {assignable.map((p) => (
+              <option key={p.user_id} value={p.user_id}>
+                {p.nome} {p.cognome}
+              </option>
             ))}
-          </ul>
-        )}
-      </section>
-    </main>
+          </select>
+          <Button type="submit" disabled={add.isPending}>
+            Aggiungi alla bolla
+          </Button>
+        </form>
+      </Card>
+
+      <BollaImport
+        key={importKey}
+        participants={assignable}
+        busy={add.isPending}
+        onImport={(list: ImportRow[]) => add.mutate({ rows: list }, { onSuccess: () => setImportKey((k) => k + 1) })}
+      />
+    </div>
+  );
+}
+
+function Counter({ label, value, warn }: { label: string; value: string; warn?: boolean }) {
+  return (
+    <div className={cn("rounded-lg border bg-card p-2", warn ? "border-destructive/40" : "border-border")}>
+      <p className={cn("font-serif text-xl", warn ? "text-destructive" : "text-primary")}>{value}</p>
+      <p className="eyebrow text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+
+function Flag({ label, on, onClick, danger }: { label: string; on: boolean; onClick: () => void; danger?: boolean }) {
+  return (
+    <button type="button" onClick={onClick} className={cn("inline-flex min-h-8 items-center gap-1.5", on ? (danger ? "text-destructive" : "text-success") : "text-muted-foreground")}>
+      <span className={cn("flex h-4 w-4 items-center justify-center rounded border", on ? (danger ? "border-destructive bg-destructive text-white" : "border-success bg-success text-white") : "border-border-strong")}>
+        {on && <Check className="h-3 w-3" />}
+      </span>
+      {label}
+    </button>
   );
 }

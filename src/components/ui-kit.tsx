@@ -1,14 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import {
-  STATUS_LABEL,
-  VERIFICATION_LABEL,
-  dayNumber,
-  monthShort,
-  type Costume,
-  type EventStatus,
-} from "@/data/demo";
+import type { EventStatus, ParticipantStatus } from "@/lib/api";
+import { EVENT_STATUS_LABEL, PARTICIPANT_LABEL, dayNumber, monthShort } from "@/lib/format";
 
 /* ------------------------------------------------------------------ */
 /* Marchio e placeholder logo                                          */
@@ -113,19 +107,6 @@ export function CardGrid({
 /* Etichette e stati                                                   */
 /* ------------------------------------------------------------------ */
 
-export function DemoNote({ className }: { className?: string }) {
-  return (
-    <p
-      className={cn(
-        "eyebrow border-t border-border pt-3 text-muted-foreground/80",
-        className,
-      )}
-    >
-      Prototipo UI — dati dimostrativi
-    </p>
-  );
-}
-
 const statusStyle: Record<EventStatus, string> = {
   richiesta: "border-warning/40 bg-warning/10 text-warning-foreground",
   confermato: "border-success/40 bg-success/10 text-success",
@@ -150,21 +131,24 @@ export function StatusTag({
       )}
     >
       <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
-      {STATUS_LABEL[status]}
+      {EVENT_STATUS_LABEL[status]}
     </span>
   );
 }
 
-export function VerificationTag({ value }: { value: Costume["verification"] }) {
-  const tone =
-    value === "verificato"
-      ? "text-success border-success/40 bg-success/10"
-      : value === "in_verifica"
-        ? "text-warning border-warning/40 bg-warning/10"
-        : "text-muted-foreground border-border-strong bg-muted";
+const participantStyle: Record<ParticipantStatus, string> = {
+  pending: "border-warning/40 bg-warning/10 text-warning-foreground",
+  available: "border-accent/40 bg-accent/10 text-accent",
+  unavailable: "border-border-strong bg-muted text-muted-foreground",
+  confirmed: "border-success/40 bg-success/10 text-success",
+  rejected: "border-destructive/40 bg-destructive/10 text-destructive",
+};
+
+export function ParticipantTag({ status, className }: { status: ParticipantStatus; className?: string }) {
   return (
-    <span className={cn("inline-block rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.08em]", tone)}>
-      {VERIFICATION_LABEL[value]}
+    <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em]", participantStyle[status], className)}>
+      <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
+      {PARTICIPANT_LABEL[status]}
     </span>
   );
 }
@@ -296,6 +280,7 @@ export function EventRow({
   time,
   code,
   status,
+  extra,
 }: {
   to: string;
   params: Record<string, string>;
@@ -305,6 +290,7 @@ export function EventRow({
   time: string;
   code: string;
   status: EventStatus;
+  extra?: ReactNode;
 }) {
   return (
     <Link
@@ -330,8 +316,9 @@ export function EventRow({
         <span className="mt-1.5 block font-sans text-[11px] tracking-wider text-muted-foreground/80">
           {code}
         </span>
-        <span className="mt-2 block">
+        <span className="mt-2 flex flex-wrap gap-1.5">
           <StatusTag status={status} />
+          {extra}
         </span>
       </span>
       <Shield className="mt-1 h-5 w-5 shrink-0 text-border-strong" />
@@ -393,5 +380,93 @@ export function Thumb({ label }: { label: string }) {
     >
       {label.slice(0, 2).toUpperCase()}
     </span>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Stati di caricamento, errore e lista vuota                          */
+/* ------------------------------------------------------------------ */
+
+export function Loading({ label = "Caricamento…" }: { label?: string }) {
+  return <p className="py-10 text-center text-sm text-muted-foreground">{label}</p>;
+}
+
+export function ErrorBox({ error, onRetry }: { error: { message: string } | null; onRetry?: () => void }) {
+  return (
+    <Card className="border-destructive/40">
+      <p className="text-sm text-destructive">{error?.message || "Qualcosa è andato storto."}</p>
+      {onRetry && (
+        <button type="button" onClick={onRetry} className="mt-3 text-sm font-semibold text-accent underline">
+          Riprova
+        </button>
+      )}
+    </Card>
+  );
+}
+
+export function Empty({ children }: { children: ReactNode }) {
+  return (
+    <Card>
+      <p className="text-sm text-muted-foreground">{children}</p>
+    </Card>
+  );
+}
+
+export function PageTitle({ eyebrow, title, subtitle, action }: { eyebrow: string; title: string; subtitle?: string; action?: ReactNode }) {
+  return (
+    <section className="flex items-start justify-between gap-3 pt-6">
+      <div className="min-w-0">
+        <p className="eyebrow text-accent">{eyebrow}</p>
+        <h2 className="mt-1 font-serif text-2xl text-primary">{title}</h2>
+        {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
+      </div>
+      {action}
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Campi dei moduli                                                    */
+/* ------------------------------------------------------------------ */
+
+const inputClass =
+  "mt-1 min-h-11 w-full rounded-lg border border-border-strong bg-surface px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground/70 focus:border-accent focus:ring-2 focus:ring-accent/30";
+
+export function TextInput({ label, hint, className, ...rest }: React.InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string }) {
+  return (
+    <label className={cn("block", className)}>
+      <span className="eyebrow text-muted-foreground">{label}</span>
+      <input {...rest} className={inputClass} />
+      {hint && <span className="mt-1 block text-xs text-muted-foreground">{hint}</span>}
+    </label>
+  );
+}
+
+export function TextArea({ label, className, ...rest }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }) {
+  return (
+    <label className={cn("block", className)}>
+      <span className="eyebrow text-muted-foreground">{label}</span>
+      <textarea rows={3} {...rest} className={cn(inputClass, "py-2")} />
+    </label>
+  );
+}
+
+export function SelectInput({ label, className, children, ...rest }: React.SelectHTMLAttributes<HTMLSelectElement> & { label: string }) {
+  return (
+    <label className={cn("block", className)}>
+      <span className="eyebrow text-muted-foreground">{label}</span>
+      <select {...rest} className={inputClass}>
+        {children}
+      </select>
+    </label>
+  );
+}
+
+export function Toggle({ checked, onChange, label, disabled }: { checked: boolean; onChange: (v: boolean) => void; label: string; disabled?: boolean }) {
+  return (
+    <label className={cn("flex min-h-11 cursor-pointer items-center gap-3 text-sm", disabled && "cursor-not-allowed opacity-50")}>
+      <input type="checkbox" className="h-5 w-5 accent-[var(--accent)]" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
+      <span>{label}</span>
+    </label>
   );
 }

@@ -7,19 +7,30 @@ function Home() {
   return (
     <main className="parchment-bg flex min-h-screen flex-col items-center justify-center px-6 py-10">
       <div className="w-full max-w-sm">
-        <div className="mb-10 flex justify-center"><img src="/malastrana-logo.png" alt="Malastrana App" className="h-auto w-56 object-contain" /></div>
+        <div className="mb-10 flex justify-center">
+          <img src="/malastrana-logo.png" alt="MalaStranApp" className="h-auto w-56 object-contain" />
+        </div>
         <p className="eyebrow mb-4 text-center text-muted-foreground">Chi sei?</p>
         <div className="grid gap-4">
           <Link to="/u" className="group flex items-center gap-4 rounded-xl border border-primary bg-primary px-5 py-5 text-white shadow-[var(--shadow-card)] transition-all active:scale-[0.98]">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-white/15"><UserRound className="h-6 w-6" strokeWidth={1.5} /></span>
-            <span><span className="block text-base font-semibold uppercase tracking-[0.1em]">Collaboratore</span><span className="mt-1 block text-sm text-white/85">Accedi alla tua area</span></span>
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-white/15">
+              <UserRound className="h-6 w-6" strokeWidth={1.5} />
+            </span>
+            <span>
+              <span className="block text-base font-semibold uppercase tracking-[0.1em]">User</span>
+              <span className="mt-1 block text-sm text-white/85">Accedi alla tua area personale</span>
+            </span>
           </Link>
           <Link to="/admin" className="group flex items-center gap-4 rounded-xl border border-accent bg-accent px-5 py-5 text-white shadow-[var(--shadow-card)] transition-all active:scale-[0.98]">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-white/15"><ShieldCheck className="h-6 w-6" strokeWidth={1.5} /></span>
-            <span><span className="block text-base font-semibold uppercase tracking-[0.1em]">Admin</span><span className="mt-1 block text-sm text-white/85">Ufficio & Regia</span></span>
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-white/15">
+              <ShieldCheck className="h-6 w-6" strokeWidth={1.5} />
+            </span>
+            <span>
+              <span className="block text-base font-semibold uppercase tracking-[0.1em]">Admin</span>
+              <span className="mt-1 block text-sm text-white/85">Ufficio & regia</span>
+            </span>
           </Link>
         </div>
-        <p className="mt-8 text-center text-sm leading-6 text-muted-foreground">Accesso protetto. Admin e collaboratori utilizzano credenziali e sessioni reali.</p>
       </div>
     </main>
   );

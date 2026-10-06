@@ -1,219 +1,104 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { CalendarDays, Shirt, Ticket, UserRound, type LucideIcon } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import {
-  Card,
-  DemoNote,
-  EventRow,
-  LinkButton,
-  SectionTitle,
-  StatusTag,
-} from "@/components/ui-kit";
-import { CollaboratorAvatar } from "@/components/CollaboratorAvatar";
-import { useDemo } from "@/lib/store";
-import { CURRENT_USER, NOTIFICATIONS, formatDate } from "@/data/demo";
-import { Boxes, CalendarDays, ClipboardList, Shirt } from "lucide-react";
+import { Avatar, Card, Empty, ErrorBox, Field, Loading, ParticipantTag, SectionTitle } from "@/components/ui-kit";
+import { useMyEvents, useProfile } from "@/lib/api";
+import { formatDateLong, timeRange, todayIso } from "@/lib/format";
 
-export const Route = createFileRoute("/u/")({
-  head: () => ({
-    meta: [
-      { title: "Home collaboratore — Malastrana" },
-      {
-        name: "description",
-        content:
-          "Prossimo evento, disponibilità da dare ed eventi confermati nel prototipo Malastrana.",
-      },
-      { property: "og:title", content: "Home collaboratore — Malastrana" },
-      {
-        property: "og:description",
-        content: "Area collaboratore dimostrativa del gestionale Malastrana.",
-      },
-      { property: "og:url", content: "/u" },
-    ],
-    links: [{ rel: "canonical", href: "/u" }],
-  }),
-  component: HomeCollaboratore,
-});
+export const Route = createFileRoute("/u/")({ component: UserHome });
 
-const QUICK = [
-  { to: "/u/costumi", label: "I miei costumi", icon: Shirt },
-  { to: "/u/materiale", label: "Materiale personale", icon: Boxes },
-  { to: "/u/calendario", label: "Calendario", icon: CalendarDays },
-  { to: "/u/profilo", label: "Scheda personale", icon: ClipboardList },
-];
-
-function HomeCollaboratore() {
-  const { events, availability } = useDemo();
-  const upcoming = events
-    .filter((e) => e.status !== "annullato")
-    .sort((a, b) => a.date.localeCompare(b.date));
-  const next = upcoming[0];
-  const toAnswer = events.filter(
-    (e) => e.status === "richiesta" && !availability[e.id],
-  );
-  const confirmed = events.filter((e) => e.status === "confermato");
+function UserHome() {
+  const profile = useProfile();
+  const events = useMyEvents();
+  const today = todayIso();
+  const mine = (events.data?.events ?? []).filter((e) => e.data >= today && e.stato !== "annullato");
+  const toAnswer = mine.filter((e) => e.mio_stato === "pending");
+  const next = mine.find((e) => e.mio_stato === "confirmed");
+  const u = profile.data?.user;
 
   return (
-    <AppShell area="user" title="" notifications={NOTIFICATIONS.length}>
-      {/* Profile header */}
-      <section className="flex items-center gap-4 pt-6">
-        <CollaboratorAvatar
-          name={CURRENT_USER.name}
-          role={CURRENT_USER.role}
-          size={72}
-        />
-        <div>
-          <p className="eyebrow text-muted-foreground">Benvenuta</p>
-          <h2 className="mt-1 font-serif text-2xl text-primary">
-            Ciao, {CURRENT_USER.name.split(" ")[0]}
-          </h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">{CURRENT_USER.role}</p>
+    <AppShell area="user" title={u ? `${u.nome} ${u.cognome}` : "La mia area"}>
+      {profile.isLoading ? (
+        <Loading />
+      ) : profile.isError || !u ? (
+        <div className="mt-6">
+          <ErrorBox error={profile.error} onRetry={() => void profile.refetch()} />
         </div>
-      </section>
+      ) : (
+        <>
+          <section className="flex items-center gap-4 pt-6">
+            <Avatar name={`${u.nome} ${u.cognome}`} size="md" />
+            <div className="min-w-0">
+              <p className="eyebrow text-accent">Benvenuto</p>
+              <h2 className="font-serif text-2xl text-primary">Ciao, {u.nome}</h2>
+              {u.qualifica && <p className="text-sm text-muted-foreground">{u.qualifica}</p>}
+            </div>
+          </section>
 
-      {/* Quick actions — card colorate */}
-      <section className="mt-6">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {QUICK.map((q) => {
-            const Icon = q.icon;
-            return (
-              <Link
-                key={q.to}
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                to={q.to as any}
-                className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 text-center shadow-[var(--shadow-card)] transition-all active:scale-[0.98] active:bg-muted"
-              >
-                <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary">
-                  <Icon className="h-6 w-6 text-accent" strokeWidth={1.5} />
-                </span>
-                <span className="text-xs font-semibold text-foreground">{q.label}</span>
+          {toAnswer.length > 0 && (
+            <section className="mt-6">
+              <Card className="border-warning/50 bg-warning/5">
+                <p className="eyebrow text-warning-foreground">Da fare</p>
+                <p className="mt-1 text-sm text-foreground">
+                  Hai <strong>{toAnswer.length}</strong> {toAnswer.length === 1 ? "richiesta" : "richieste"} di disponibilità a cui rispondere.
+                </p>
+                <ul className="mt-2">
+                  {toAnswer.map((e) => (
+                    <li key={e.code}>
+                      <Link to="/u/eventi/$code" params={{ code: e.code }} className="block py-1.5 text-sm font-semibold text-accent underline">
+                        {e.nome} — {formatDateLong(e.data)}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </section>
+          )}
+
+          <section className="mt-6 grid grid-cols-2 gap-3">
+            <Tile to="/u/eventi" icon={Ticket} label="I miei eventi" />
+            <Tile to="/u/calendario" icon={CalendarDays} label="Calendario" />
+            <Tile to="/u/profilo" icon={UserRound} label="Il mio profilo" />
+            <Tile to="/u/profilo" icon={Shirt} label="I miei costumi" />
+          </section>
+
+          <section className="mt-8">
+            <SectionTitle>Prossimo evento confermato</SectionTitle>
+            {events.isLoading ? (
+              <Loading />
+            ) : !next ? (
+              <Empty>Nessun evento confermato in programma.</Empty>
+            ) : (
+              <Link to="/u/eventi/$code" params={{ code: next.code }}>
+                <Card>
+                  <p className="font-serif text-xl text-primary">{next.nome}</p>
+                  <p className="mt-1 text-sm text-foreground">{formatDateLong(next.data)}</p>
+                  <div className="mt-3">
+                    {next.ora_ritrovo && <Field label="Ritrovo">{next.ora_ritrovo}</Field>}
+                    <Field label="Orario">{timeRange(next.ora_inizio, next.ora_fine)}</Field>
+                    <Field label="Luogo">{next.luogo || "—"}</Field>
+                    {next.ruolo_evento && <Field label="Ruolo">{next.ruolo_evento}</Field>}
+                  </div>
+                  <div className="mt-3">
+                    <ParticipantTag status="confirmed" />
+                  </div>
+                </Card>
               </Link>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Next event */}
-      {next && (
-        <section className="mt-6">
-          <Card className="border-primary/30">
-            <p className="eyebrow text-primary">Prossimo evento</p>
-            <p className="mt-3 font-serif text-2xl leading-tight text-foreground">
-              {formatDate(next.date)}
-            </p>
-            <h3 className="mt-1 font-serif text-lg text-primary">{next.name}</h3>
-            <dl className="mt-4 space-y-2 text-sm text-muted-foreground">
-              <div className="flex gap-2">
-                <dt className="eyebrow w-16 shrink-0 pt-0.5">Luogo</dt>
-                <dd className="min-w-0 text-foreground">{next.place}</dd>
-              </div>
-              <div className="flex gap-2">
-                <dt className="eyebrow w-16 shrink-0 pt-0.5">Orario</dt>
-                <dd className="text-foreground">
-                  {next.timeStart}–{next.timeEnd}
-                </dd>
-              </div>
-              <div className="flex gap-2">
-                <dt className="eyebrow w-16 shrink-0 pt-0.5">Codice</dt>
-                <dd className="text-foreground">{next.code}</dd>
-              </div>
-            </dl>
-            <div className="mt-4">
-              <StatusTag status={next.status} />
-            </div>
-            <div className="mt-5">
-              <LinkButton to="/u/eventi/$code" params={{ code: next.code }} full>
-                Apri evento
-              </LinkButton>
-            </div>
-          </Card>
-        </section>
+            )}
+          </section>
+        </>
       )}
-
-      {/* Availability requests */}
-      <section className="mt-8">
-        <SectionTitle>Disponibilità da dare</SectionTitle>
-        {toAnswer.length === 0 ? (
-          <Card>
-            <p className="py-1 text-sm text-muted-foreground">
-              Nessuna disponibilità in attesa di risposta.
-            </p>
-          </Card>
-        ) : (
-          <div className="overflow-hidden rounded-xl border border-border shadow-[var(--shadow-card)]">
-            {toAnswer.map((e) => (
-              <EventRow
-                key={e.id}
-                to="/u/eventi/$code"
-                params={{ code: e.code }}
-                date={e.date}
-                name={e.name}
-                place={e.place}
-                time={`${e.timeStart}–${e.timeEnd}`}
-                code={e.code}
-                status={e.status}
-              />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Confirmed events */}
-      <section className="mt-8">
-        <SectionTitle>Eventi confermati</SectionTitle>
-        {confirmed.length === 0 ? (
-          <Card>
-            <p className="py-1 text-sm text-muted-foreground">Nessun evento confermato.</p>
-          </Card>
-        ) : (
-          <div className="overflow-hidden rounded-xl border border-border shadow-[var(--shadow-card)]">
-            {confirmed.map((e) => (
-              <EventRow
-                key={e.id}
-                to="/u/eventi/$code"
-                params={{ code: e.code }}
-                date={e.date}
-                name={e.name}
-                place={e.place}
-                time={`${e.timeStart}–${e.timeEnd}`}
-                code={e.code}
-                status={e.status}
-              />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Notifications */}
-      <section className="mt-8">
-        <SectionTitle
-          action={
-            <Link to="/u/notifiche" className="eyebrow text-accent">
-              Tutte
-            </Link>
-          }
-        >
-          Notifiche recenti
-        </SectionTitle>
-        <Card>
-          <ul>
-            {NOTIFICATIONS.slice(0, 3).map((n) => (
-              <li
-                key={n.id}
-                className="flex items-start justify-between gap-3 border-b border-border py-3 last:border-b-0"
-              >
-                <span className="min-w-0 text-sm text-foreground">{n.text}</span>
-                <span className="eyebrow shrink-0 pt-0.5 text-muted-foreground">
-                  {n.when}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      </section>
-
-      <div className="mt-8">
-        <DemoNote />
-      </div>
     </AppShell>
+  );
+}
+
+function Tile({ to, icon: Icon, label }: { to: string; icon: LucideIcon; label: string }) {
+  return (
+    <Link to={to} className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card px-3 py-5 text-center shadow-[var(--shadow-card)] active:bg-muted">
+      <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary text-accent">
+        <Icon className="h-6 w-6" strokeWidth={1.5} />
+      </span>
+      <span className="text-sm font-semibold text-foreground">{label}</span>
+    </Link>
   );
 }

@@ -1,85 +1,136 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Outlet, Link, createRootRouteWithContext, useRouter, useLocation, HeadContent, Scripts } from "@tanstack/react-router";
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import type { QueryClient } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { Link, Outlet, createRootRouteWithContext, useLocation } from "@tanstack/react-router";
+import { useEffect, useState, type FormEvent } from "react";
 import { Toaster, toast } from "sonner";
-import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
-import { DemoProvider } from "../lib/store";
-
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
-const ADMIN_TOKEN_KEY = "malastrana-admin-token";
-const USER_TOKEN_KEY = "malastrana-user-token";
-const USER_DATA_KEY = "malastrana-user";
-
-function NotFoundComponent() {
-  return <div className="flex min-h-screen items-center justify-center bg-background px-4"><div className="max-w-md text-center"><h1 className="text-7xl font-bold text-foreground">404</h1><h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2><p className="mt-2 text-sm text-muted-foreground">The page you're looking for doesn't exist or has been moved.</p><div className="mt-6"><Link to="/" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">Go home</Link></div></div></div>;
-}
-
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  console.error(error);
-  const router = useRouter();
-  useEffect(() => { reportLovableError(error, { boundary: "tanstack_root_error_component" }); }, [error]);
-  return <div className="flex min-h-screen items-center justify-center bg-background px-4"><div className="max-w-md text-center"><h1 className="text-xl font-semibold tracking-tight text-foreground">This page didn't load</h1><p className="mt-2 text-sm text-muted-foreground">Something went wrong on our end. You can try refreshing or head back home.</p><div className="mt-6 flex flex-wrap justify-center gap-2"><button onClick={() => { router.invalidate(); reset(); }} className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">Try again</button><a href="/" className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground">Go home</a></div></div></div>;
-}
+import { api, areaFromPath, getToken, setToken, type Area } from "@/lib/api";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({ meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5" }, { title: "Malastrana — Eventi senza tempo" }, { name: "description", content: "Gestionale interno Malastrana: eventi, disponibilità, costumi e bolle di carico." }, { name: "theme-color", content: "#F4F7F6" }, { name: "apple-mobile-web-app-capable", content: "yes" }, { name: "apple-mobile-web-app-title", content: "Malastrana" }, { name: "apple-mobile-web-app-status-bar-style", content: "default" }, { name: "mobile-web-app-capable", content: "yes" }, { property: "og:site_name", content: "Malastrana" }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }], links: [{ rel: "stylesheet", href: appCss }, { rel: "icon", href: "/favicon.ico", type: "image/x-icon" }, { rel: "manifest", href: "/manifest.webmanifest" }, { rel: "apple-touch-icon", href: "/icons/icon-192.png" }, { rel: "preconnect", href: "https://fonts.googleapis.com" }, { rel: "preconnect", href: "https://fonts.gstatic.com" }, { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" }] }),
-  shellComponent: RootShell,
   component: RootComponent,
-  notFoundComponent: NotFoundComponent,
-  errorComponent: ErrorComponent,
+  notFoundComponent: NotFound,
 });
 
-function RootShell({ children }: { children: ReactNode }) { return <html lang="it"><head><HeadContent /></head><body>{children}<Scripts /></body></html>; }
-function RootComponent() { const { queryClient } = Route.useRouteContext(); const location = useLocation(); return <QueryClientProvider client={queryClient}><ProtectedArea pathname={location.pathname} /><Toaster position="top-center" richColors closeButton /></QueryClientProvider>; }
-
-function AuthenticatedOutlet() {
-  return <DemoProvider><Outlet /></DemoProvider>;
+function RootComponent() {
+  const { queryClient } = Route.useRouteContext();
+  const location = useLocation();
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Protected key={areaFromPath(location.pathname) ?? "public"} area={areaFromPath(location.pathname)} />
+      <Toaster position="top-center" richColors closeButton />
+    </QueryClientProvider>
+  );
 }
 
-function ProtectedArea({ pathname }: { pathname: string }) {
-  const area = pathname.startsWith("/admin") ? "admin" : pathname.startsWith("/u") ? "collaborator" : null;
-  const tokenKey = area === "admin" ? ADMIN_TOKEN_KEY : area === "collaborator" ? USER_TOKEN_KEY : null;
-  const [authenticated, setAuthenticated] = useState(() => !area || Boolean(window.localStorage.getItem(tokenKey!)));
-  const [checking, setChecking] = useState(Boolean(area && window.localStorage.getItem(tokenKey!)));
+function NotFound() {
+  return (
+    <main className="parchment-bg flex min-h-screen items-center justify-center px-6">
+      <div className="text-center">
+        <h1 className="font-serif text-5xl text-primary">404</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Questa pagina non esiste.</p>
+        <Link to="/" className="mt-4 inline-block text-sm font-semibold text-accent underline">
+          Torna all'inizio
+        </Link>
+      </div>
+    </main>
+  );
+}
+
+type Check = "checking" | "in" | "out";
+
+/** Mostra le pagine admin/user solo a chi ha una sessione valida per quell'area. */
+function Protected({ area }: { area: Area | null }) {
+  const [state, setState] = useState<Check>(() => (!area ? "in" : getToken(area) ? "checking" : "out"));
 
   useEffect(() => {
-    if (!area || !tokenKey) { setAuthenticated(true); setChecking(false); return; }
-    const token = window.localStorage.getItem(tokenKey);
-    if (!token) { setAuthenticated(false); setChecking(false); return; }
-    setChecking(true);
-    fetch(`${API_BASE_URL}/me`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(async (response) => {
-        const data = await response.json().catch(() => null);
-        const expectedRole = area === "admin" ? "admin" : "user";
-        if (!response.ok || !data?.success || data.user?.role !== expectedRole) throw new Error(data?.error || "Sessione non valida");
-        if (area === "collaborator") window.localStorage.setItem(USER_DATA_KEY, JSON.stringify(data.user));
-        setAuthenticated(true);
+    if (!area) {
+      setState("in");
+      return;
+    }
+    if (!getToken(area)) {
+      setState("out");
+      return;
+    }
+    let alive = true;
+    setState("checking");
+    api<{ user: { role: string } }>(area, "/me")
+      .then((d) => {
+        if (!alive) return;
+        if (d.user.role !== area) {
+          setToken(area, null);
+          setState("out");
+        } else setState("in");
       })
-      .catch(() => { window.localStorage.removeItem(tokenKey); if (area === "collaborator") window.localStorage.removeItem(USER_DATA_KEY); setAuthenticated(false); })
-      .finally(() => setChecking(false));
-  }, [area, tokenKey]);
+      .catch(() => alive && setState(getToken(area) ? "in" : "out"));
+    return () => {
+      alive = false;
+    };
+  }, [area]);
 
-  if (!area) return <AuthenticatedOutlet />;
-  if (checking) return <main className="parchment-bg flex min-h-screen items-center justify-center px-6"><p className="text-sm text-muted-foreground">Verifica sessione…</p></main>;
-  if (authenticated) return <AuthenticatedOutlet />;
+  useEffect(() => {
+    const onLogout = (e: Event) => {
+      if ((e as CustomEvent<Area>).detail === area) setState("out");
+    };
+    window.addEventListener("malastrana:logout", onLogout);
+    return () => window.removeEventListener("malastrana:logout", onLogout);
+  }, [area]);
+
+  if (!area || state === "in") return <Outlet />;
+  if (state === "checking")
+    return (
+      <main className="parchment-bg flex min-h-screen items-center justify-center px-6">
+        <p className="text-sm text-muted-foreground">Verifica accesso…</p>
+      </main>
+    );
+  return <LoginForm area={area} onDone={() => setState("in")} />;
+}
+
+function LoginForm({ area, onDone }: { area: Area; onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
 
   async function enter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const username = String(formData.get("username") || "").trim();
-    const password = String(formData.get("password") || "");
+    const form = new FormData(event.currentTarget);
+    const username = area === "admin" ? "admin" : String(form.get("username") || "").trim();
+    const password = String(form.get("password") || "");
+    setBusy(true);
     try {
-      const body = area === "admin" ? { username: "admin", password } : { username, password };
-      const response = await fetch(`${API_BASE_URL}/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      const data = await response.json().catch(() => null);
-      const expectedRole = area === "admin" ? "admin" : "user";
-      if (!response.ok || !data?.success || !data?.token || data?.user?.role !== expectedRole) throw new Error(data?.error || "Credenziali non valide");
-      window.localStorage.setItem(tokenKey!, data.token);
-      if (area === "collaborator") window.localStorage.setItem(USER_DATA_KEY, JSON.stringify(data.user));
-      setAuthenticated(true);
-    } catch (error) { toast.error(error instanceof Error ? error.message : "Impossibile effettuare il login"); }
+      const d = await api<{ token: string; user: { role: string } }>(null, "/login", { method: "POST", body: { username, password } });
+      if (d.user.role !== area) throw new Error(area === "admin" ? "Queste non sono credenziali admin" : "Queste non sono credenziali user");
+      setToken(area, d.token);
+      onDone();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Accesso non riuscito");
+    } finally {
+      setBusy(false);
+    }
   }
 
-  return <main className="parchment-bg fixed inset-0 z-[100] flex min-h-screen items-center justify-center px-6 py-10" style={{ pointerEvents: "auto" }}><form onSubmit={enter} className="relative z-[101] w-full max-w-sm border border-border-strong bg-surface p-6 shadow-[var(--shadow-card)]" style={{ pointerEvents: "auto" }}><p className="eyebrow text-accent">{area === "admin" ? "Ufficio & regia" : "Area collaboratore"}</p><h1 className="mt-2 font-serif text-2xl text-primary">Accedi</h1><Link to="/" className="mt-4 inline-flex text-sm text-accent hover:underline">Indietro</Link>{area === "collaborator" && <><label htmlFor="area-username" className="mt-5 block text-sm text-foreground">Username</label><input id="area-username" name="username" type="text" defaultValue="" autoFocus autoComplete="username" className="mt-1 min-h-12 w-full border border-border-strong bg-background px-3 text-sm text-foreground outline-none focus:border-accent focus:ring-2 focus:ring-accent/30" /></>}<label htmlFor="area-password" className="mt-5 block text-sm text-foreground">Password</label><input id="area-password" name="password" type="password" defaultValue="" autoFocus={area === "admin"} autoComplete="current-password" className="mt-1 min-h-12 w-full border border-border-strong bg-background px-3 text-sm text-foreground outline-none focus:border-accent focus:ring-2 focus:ring-accent/30" /><button type="submit" className="relative z-[102] mt-4 min-h-11 w-full bg-primary px-4 text-sm font-semibold uppercase tracking-[0.08em] text-white">Entra</button></form></main>;
+  const field =
+    "mt-1 min-h-12 w-full rounded-lg border border-border-strong bg-background px-3 text-base text-foreground outline-none focus:border-accent focus:ring-2 focus:ring-accent/30";
+  return (
+    <main className="parchment-bg flex min-h-screen items-center justify-center px-6 py-10">
+      <form onSubmit={enter} className="w-full max-w-sm rounded-xl border border-border-strong bg-surface p-6 shadow-[var(--shadow-card)]">
+        <img src="/malastrana-logo.png" alt="MalaStranApp" className="mx-auto mb-4 h-auto w-32" />
+        <p className="eyebrow text-accent">{area === "admin" ? "Ufficio & regia" : "Area user"}</p>
+        <h1 className="mt-1 font-serif text-2xl text-primary">Accedi</h1>
+        {area === "user" && (
+          <label className="mt-5 block">
+            <span className="text-sm text-foreground">Username</span>
+            <input name="username" type="text" autoFocus autoCapitalize="none" autoCorrect="off" autoComplete="username" required className={field} />
+          </label>
+        )}
+        <label className="mt-4 block">
+          <span className="text-sm text-foreground">Password</span>
+          <input name="password" type="password" autoFocus={area === "admin"} autoComplete="current-password" required className={field} />
+        </label>
+        <button type="submit" disabled={busy} className="mt-5 min-h-12 w-full rounded-lg bg-primary px-4 text-sm font-semibold uppercase tracking-[0.08em] text-white disabled:opacity-50">
+          {busy ? "Accesso…" : "Entra"}
+        </button>
+        <Link to="/" className="mt-4 block text-center text-sm text-accent hover:underline">
+          Indietro
+        </Link>
+        {area === "user" && <p className="mt-4 text-center text-xs text-muted-foreground">Username e password te li fornisce l'ufficio.</p>}
+      </form>
+    </main>
+  );
 }

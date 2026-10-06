@@ -10,16 +10,12 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as MalamexRouteImport } from './routes/malamex'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
-import { Route as AdminAltroRouteImport } from './routes/admin.altro'
 import { Route as AdminCalendarioRouteImport } from './routes/admin.calendario'
-import { Route as AdminCostumiRouteImport } from './routes/admin.costumi'
+import { Route as AdminNotificheRouteImport } from './routes/admin.notifiche'
+import { Route as AdminReportRouteImport } from './routes/admin.report'
 import { Route as UIndexRouteImport } from './routes/u.index'
 import { Route as UCalendarioRouteImport } from './routes/u.calendario'
-import { Route as UChatRouteImport } from './routes/u.chat'
-import { Route as UCostumiRouteImport } from './routes/u.costumi'
-import { Route as UMaterialeRouteImport } from './routes/u.materiale'
 import { Route as UNotificheRouteImport } from './routes/u.notifiche'
 import { Route as UProfiloRouteImport } from './routes/u.profilo'
 import { Route as AdminCollaboratoriIndexRouteImport } from './routes/admin.collaboratori.index'
@@ -27,20 +23,13 @@ import { Route as AdminCollaboratoriIdRouteImport } from './routes/admin.collabo
 import { Route as AdminEventiIndexRouteImport } from './routes/admin.eventi.index'
 import { Route as AdminEventiCodeRouteImport } from './routes/admin.eventi.$code'
 import { Route as AdminEventiNuovoRouteImport } from './routes/admin.eventi.nuovo'
-import { Route as AdminModuloSlugRouteImport } from './routes/admin.modulo.$slug'
 import { Route as UBollaCodeRouteImport } from './routes/u.bolla.$code'
 import { Route as UEventiIndexRouteImport } from './routes/u.eventi.index'
 import { Route as UEventiCodeRouteImport } from './routes/u.eventi.$code'
-import { Route as AdminCollaboratoriIdDisponibilitaRouteImport } from './routes/admin.collaboratori.$id.disponibilita'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MalamexRoute = MalamexRouteImport.update({
-  id: '/malamex',
-  path: '/malamex',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -48,19 +37,19 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminAltroRoute = AdminAltroRouteImport.update({
-  id: '/admin/altro',
-  path: '/admin/altro',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminCalendarioRoute = AdminCalendarioRouteImport.update({
   id: '/admin/calendario',
   path: '/admin/calendario',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminCostumiRoute = AdminCostumiRouteImport.update({
-  id: '/admin/costumi',
-  path: '/admin/costumi',
+const AdminNotificheRoute = AdminNotificheRouteImport.update({
+  id: '/admin/notifiche',
+  path: '/admin/notifiche',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminReportRoute = AdminReportRouteImport.update({
+  id: '/admin/report',
+  path: '/admin/report',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UIndexRoute = UIndexRouteImport.update({
@@ -71,21 +60,6 @@ const UIndexRoute = UIndexRouteImport.update({
 const UCalendarioRoute = UCalendarioRouteImport.update({
   id: '/u/calendario',
   path: '/u/calendario',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const UChatRoute = UChatRouteImport.update({
-  id: '/u/chat',
-  path: '/u/chat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const UCostumiRoute = UCostumiRouteImport.update({
-  id: '/u/costumi',
-  path: '/u/costumi',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const UMaterialeRoute = UMaterialeRouteImport.update({
-  id: '/u/materiale',
-  path: '/u/materiale',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UNotificheRoute = UNotificheRouteImport.update({
@@ -123,11 +97,6 @@ const AdminEventiNuovoRoute = AdminEventiNuovoRouteImport.update({
   path: '/admin/eventi/nuovo',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminModuloSlugRoute = AdminModuloSlugRouteImport.update({
-  id: '/admin/modulo/$slug',
-  path: '/admin/modulo/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const UBollaCodeRoute = UBollaCodeRouteImport.update({
   id: '/u/bolla/$code',
   path: '/u/bolla/$code',
@@ -143,101 +112,73 @@ const UEventiCodeRoute = UEventiCodeRouteImport.update({
   path: '/u/eventi/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminCollaboratoriIdDisponibilitaRoute =
-  AdminCollaboratoriIdDisponibilitaRouteImport.update({
-    id: '/disponibilita',
-    path: '/disponibilita',
-    getParentRoute: () => AdminCollaboratoriIdRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/malamex': typeof MalamexRoute
-  '/admin/altro': typeof AdminAltroRoute
   '/admin/calendario': typeof AdminCalendarioRoute
-  '/admin/costumi': typeof AdminCostumiRoute
+  '/admin/notifiche': typeof AdminNotificheRoute
+  '/admin/report': typeof AdminReportRoute
   '/u/calendario': typeof UCalendarioRoute
-  '/u/chat': typeof UChatRoute
-  '/u/costumi': typeof UCostumiRoute
-  '/u/materiale': typeof UMaterialeRoute
   '/u/notifiche': typeof UNotificheRoute
   '/u/profilo': typeof UProfiloRoute
   '/admin/': typeof AdminIndexRoute
   '/u/': typeof UIndexRoute
-  '/admin/collaboratori/$id': typeof AdminCollaboratoriIdRouteWithChildren
+  '/admin/collaboratori/$id': typeof AdminCollaboratoriIdRoute
   '/admin/eventi/$code': typeof AdminEventiCodeRoute
   '/admin/eventi/nuovo': typeof AdminEventiNuovoRoute
-  '/admin/modulo/$slug': typeof AdminModuloSlugRoute
   '/u/bolla/$code': typeof UBollaCodeRoute
   '/u/eventi/$code': typeof UEventiCodeRoute
   '/admin/collaboratori/': typeof AdminCollaboratoriIndexRoute
   '/admin/eventi/': typeof AdminEventiIndexRoute
   '/u/eventi/': typeof UEventiIndexRoute
-  '/admin/collaboratori/$id/disponibilita': typeof AdminCollaboratoriIdDisponibilitaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/malamex': typeof MalamexRoute
-  '/admin/altro': typeof AdminAltroRoute
   '/admin/calendario': typeof AdminCalendarioRoute
-  '/admin/costumi': typeof AdminCostumiRoute
+  '/admin/notifiche': typeof AdminNotificheRoute
+  '/admin/report': typeof AdminReportRoute
   '/u/calendario': typeof UCalendarioRoute
-  '/u/chat': typeof UChatRoute
-  '/u/costumi': typeof UCostumiRoute
-  '/u/materiale': typeof UMaterialeRoute
   '/u/notifiche': typeof UNotificheRoute
   '/u/profilo': typeof UProfiloRoute
   '/admin': typeof AdminIndexRoute
   '/u': typeof UIndexRoute
-  '/admin/collaboratori/$id': typeof AdminCollaboratoriIdRouteWithChildren
+  '/admin/collaboratori/$id': typeof AdminCollaboratoriIdRoute
   '/admin/eventi/$code': typeof AdminEventiCodeRoute
   '/admin/eventi/nuovo': typeof AdminEventiNuovoRoute
-  '/admin/modulo/$slug': typeof AdminModuloSlugRoute
   '/u/bolla/$code': typeof UBollaCodeRoute
   '/u/eventi/$code': typeof UEventiCodeRoute
   '/admin/collaboratori': typeof AdminCollaboratoriIndexRoute
   '/admin/eventi': typeof AdminEventiIndexRoute
   '/u/eventi': typeof UEventiIndexRoute
-  '/admin/collaboratori/$id/disponibilita': typeof AdminCollaboratoriIdDisponibilitaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/malamex': typeof MalamexRoute
-  '/admin/altro': typeof AdminAltroRoute
   '/admin/calendario': typeof AdminCalendarioRoute
-  '/admin/costumi': typeof AdminCostumiRoute
+  '/admin/notifiche': typeof AdminNotificheRoute
+  '/admin/report': typeof AdminReportRoute
   '/u/calendario': typeof UCalendarioRoute
-  '/u/chat': typeof UChatRoute
-  '/u/costumi': typeof UCostumiRoute
-  '/u/materiale': typeof UMaterialeRoute
   '/u/notifiche': typeof UNotificheRoute
   '/u/profilo': typeof UProfiloRoute
   '/admin/': typeof AdminIndexRoute
   '/u/': typeof UIndexRoute
-  '/admin/collaboratori/$id': typeof AdminCollaboratoriIdRouteWithChildren
+  '/admin/collaboratori/$id': typeof AdminCollaboratoriIdRoute
   '/admin/eventi/$code': typeof AdminEventiCodeRoute
   '/admin/eventi/nuovo': typeof AdminEventiNuovoRoute
-  '/admin/modulo/$slug': typeof AdminModuloSlugRoute
   '/u/bolla/$code': typeof UBollaCodeRoute
   '/u/eventi/$code': typeof UEventiCodeRoute
   '/admin/collaboratori/': typeof AdminCollaboratoriIndexRoute
   '/admin/eventi/': typeof AdminEventiIndexRoute
   '/u/eventi/': typeof UEventiIndexRoute
-  '/admin/collaboratori/$id/disponibilita': typeof AdminCollaboratoriIdDisponibilitaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/malamex'
-    | '/admin/altro'
     | '/admin/calendario'
-    | '/admin/costumi'
+    | '/admin/notifiche'
+    | '/admin/report'
     | '/u/calendario'
-    | '/u/chat'
-    | '/u/costumi'
-    | '/u/materiale'
     | '/u/notifiche'
     | '/u/profilo'
     | '/admin/'
@@ -245,24 +186,18 @@ export interface FileRouteTypes {
     | '/admin/collaboratori/$id'
     | '/admin/eventi/$code'
     | '/admin/eventi/nuovo'
-    | '/admin/modulo/$slug'
     | '/u/bolla/$code'
     | '/u/eventi/$code'
     | '/admin/collaboratori/'
     | '/admin/eventi/'
     | '/u/eventi/'
-    | '/admin/collaboratori/$id/disponibilita'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/malamex'
-    | '/admin/altro'
     | '/admin/calendario'
-    | '/admin/costumi'
+    | '/admin/notifiche'
+    | '/admin/report'
     | '/u/calendario'
-    | '/u/chat'
-    | '/u/costumi'
-    | '/u/materiale'
     | '/u/notifiche'
     | '/u/profilo'
     | '/admin'
@@ -270,24 +205,18 @@ export interface FileRouteTypes {
     | '/admin/collaboratori/$id'
     | '/admin/eventi/$code'
     | '/admin/eventi/nuovo'
-    | '/admin/modulo/$slug'
     | '/u/bolla/$code'
     | '/u/eventi/$code'
     | '/admin/collaboratori'
     | '/admin/eventi'
     | '/u/eventi'
-    | '/admin/collaboratori/$id/disponibilita'
   id:
     | '__root__'
     | '/'
-    | '/malamex'
-    | '/admin/altro'
     | '/admin/calendario'
-    | '/admin/costumi'
+    | '/admin/notifiche'
+    | '/admin/report'
     | '/u/calendario'
-    | '/u/chat'
-    | '/u/costumi'
-    | '/u/materiale'
     | '/u/notifiche'
     | '/u/profilo'
     | '/admin/'
@@ -295,33 +224,26 @@ export interface FileRouteTypes {
     | '/admin/collaboratori/$id'
     | '/admin/eventi/$code'
     | '/admin/eventi/nuovo'
-    | '/admin/modulo/$slug'
     | '/u/bolla/$code'
     | '/u/eventi/$code'
     | '/admin/collaboratori/'
     | '/admin/eventi/'
     | '/u/eventi/'
-    | '/admin/collaboratori/$id/disponibilita'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  MalamexRoute: typeof MalamexRoute
-  AdminAltroRoute: typeof AdminAltroRoute
   AdminCalendarioRoute: typeof AdminCalendarioRoute
-  AdminCostumiRoute: typeof AdminCostumiRoute
+  AdminNotificheRoute: typeof AdminNotificheRoute
+  AdminReportRoute: typeof AdminReportRoute
   UCalendarioRoute: typeof UCalendarioRoute
-  UChatRoute: typeof UChatRoute
-  UCostumiRoute: typeof UCostumiRoute
-  UMaterialeRoute: typeof UMaterialeRoute
   UNotificheRoute: typeof UNotificheRoute
   UProfiloRoute: typeof UProfiloRoute
   AdminIndexRoute: typeof AdminIndexRoute
   UIndexRoute: typeof UIndexRoute
-  AdminCollaboratoriIdRoute: typeof AdminCollaboratoriIdRouteWithChildren
+  AdminCollaboratoriIdRoute: typeof AdminCollaboratoriIdRoute
   AdminEventiCodeRoute: typeof AdminEventiCodeRoute
   AdminEventiNuovoRoute: typeof AdminEventiNuovoRoute
-  AdminModuloSlugRoute: typeof AdminModuloSlugRoute
   UBollaCodeRoute: typeof UBollaCodeRoute
   UEventiCodeRoute: typeof UEventiCodeRoute
   AdminCollaboratoriIndexRoute: typeof AdminCollaboratoriIndexRoute
@@ -338,25 +260,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/malamex': {
-      id: '/malamex'
-      path: '/malamex'
-      fullPath: '/malamex'
-      preLoaderRoute: typeof MalamexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin/': {
       id: '/admin/'
       path: '/admin'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/altro': {
-      id: '/admin/altro'
-      path: '/admin/altro'
-      fullPath: '/admin/altro'
-      preLoaderRoute: typeof AdminAltroRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/calendario': {
@@ -366,11 +274,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCalendarioRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/costumi': {
-      id: '/admin/costumi'
-      path: '/admin/costumi'
-      fullPath: '/admin/costumi'
-      preLoaderRoute: typeof AdminCostumiRouteImport
+    '/admin/notifiche': {
+      id: '/admin/notifiche'
+      path: '/admin/notifiche'
+      fullPath: '/admin/notifiche'
+      preLoaderRoute: typeof AdminNotificheRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/report': {
+      id: '/admin/report'
+      path: '/admin/report'
+      fullPath: '/admin/report'
+      preLoaderRoute: typeof AdminReportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/u/': {
@@ -385,27 +300,6 @@ declare module '@tanstack/react-router' {
       path: '/u/calendario'
       fullPath: '/u/calendario'
       preLoaderRoute: typeof UCalendarioRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/u/chat': {
-      id: '/u/chat'
-      path: '/u/chat'
-      fullPath: '/u/chat'
-      preLoaderRoute: typeof UChatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/u/costumi': {
-      id: '/u/costumi'
-      path: '/u/costumi'
-      fullPath: '/u/costumi'
-      preLoaderRoute: typeof UCostumiRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/u/materiale': {
-      id: '/u/materiale'
-      path: '/u/materiale'
-      fullPath: '/u/materiale'
-      preLoaderRoute: typeof UMaterialeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/u/notifiche': {
@@ -457,13 +351,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminEventiNuovoRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/modulo/$slug': {
-      id: '/admin/modulo/$slug'
-      path: '/admin/modulo/$slug'
-      fullPath: '/admin/modulo/$slug'
-      preLoaderRoute: typeof AdminModuloSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/u/bolla/$code': {
       id: '/u/bolla/$code'
       path: '/u/bolla/$code'
@@ -485,46 +372,22 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UEventiCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/collaboratori/$id/disponibilita': {
-      id: '/admin/collaboratori/$id/disponibilita'
-      path: '/disponibilita'
-      fullPath: '/admin/collaboratori/$id/disponibilita'
-      preLoaderRoute: typeof AdminCollaboratoriIdDisponibilitaRouteImport
-      parentRoute: typeof AdminCollaboratoriIdRoute
-    }
   }
 }
 
-interface AdminCollaboratoriIdRouteChildren {
-  AdminCollaboratoriIdDisponibilitaRoute: typeof AdminCollaboratoriIdDisponibilitaRoute
-}
-
-const AdminCollaboratoriIdRouteChildren: AdminCollaboratoriIdRouteChildren = {
-  AdminCollaboratoriIdDisponibilitaRoute:
-    AdminCollaboratoriIdDisponibilitaRoute,
-}
-
-const AdminCollaboratoriIdRouteWithChildren =
-  AdminCollaboratoriIdRoute._addFileChildren(AdminCollaboratoriIdRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  MalamexRoute: MalamexRoute,
-  AdminAltroRoute: AdminAltroRoute,
   AdminCalendarioRoute: AdminCalendarioRoute,
-  AdminCostumiRoute: AdminCostumiRoute,
+  AdminNotificheRoute: AdminNotificheRoute,
+  AdminReportRoute: AdminReportRoute,
   UCalendarioRoute: UCalendarioRoute,
-  UChatRoute: UChatRoute,
-  UCostumiRoute: UCostumiRoute,
-  UMaterialeRoute: UMaterialeRoute,
   UNotificheRoute: UNotificheRoute,
   UProfiloRoute: UProfiloRoute,
   AdminIndexRoute: AdminIndexRoute,
   UIndexRoute: UIndexRoute,
-  AdminCollaboratoriIdRoute: AdminCollaboratoriIdRouteWithChildren,
+  AdminCollaboratoriIdRoute: AdminCollaboratoriIdRoute,
   AdminEventiCodeRoute: AdminEventiCodeRoute,
   AdminEventiNuovoRoute: AdminEventiNuovoRoute,
-  AdminModuloSlugRoute: AdminModuloSlugRoute,
   UBollaCodeRoute: UBollaCodeRoute,
   UEventiCodeRoute: UEventiCodeRoute,
   AdminCollaboratoriIndexRoute: AdminCollaboratoriIndexRoute,

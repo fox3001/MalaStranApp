@@ -1,124 +1,142 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft, ShieldCheck, Star, MapPin, Calendar, Clock, Phone, FileText } from "lucide-react";
-import { Card, StatusTag } from "@/components/ui-kit";
-import { getEventByCode, getAvailabilityForEvent } from "../data/demo";
+import { Check, ClipboardCheck, Phone, X } from "lucide-react";
+import { useState } from "react";
+import { AppShell } from "@/components/AppShell";
+import { Button, Card, ErrorBox, Field, Loading, ParticipantTag, SectionTitle, StatusTag } from "@/components/ui-kit";
+import { useApiMutation, useMyEvent } from "@/lib/api";
+import { formatDateLong, timeRange } from "@/lib/format";
 
-export const Route = createFileRoute("/u/eventi/$code")({
-  component: UserEventDetail,
-});
+export const Route = createFileRoute("/u/eventi/$code")({ component: EventoUser });
 
-function UserEventDetail() {
+function EventoUser() {
   const { code } = Route.useParams();
-  const event = getEventByCode(code);
-  const availability = getAvailabilityForEvent(code);
-
-  const currentUserId = "c1";
-  const myEntry = availability.find((a) => a.userId === currentUserId);
-
-  if (!event) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center p-6 text-center">
-        <p className="text-muted-foreground">Evento non trovato.</p>
-        <Link to="/u/eventi" className="mt-4 text-sm text-primary hover:underline">
-          Torna agli eventi
-        </Link>
-      </div>
-    );
-  }
-
-  const isConfirmed = !!myEntry?.confirmed;
-  const isTL = !!myEntry?.isTL;
+  const q = useMyEvent(code);
+  const [nota, setNota] = useState("");
+  const answer = useApiMutation<"available" | "unavailable">("user", (stato) => ({ path: `/my/events/${code}/availability`, method: "POST", body: { stato, nota } }), {
+    success: "Risposta inviata all'ufficio",
+    invalidate: [["events"]],
+  });
 
   return (
-    <main className="mx-auto min-h-screen max-w-3xl px-4 py-6">
-      <Link
-        to="/u/eventi"
-        className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ChevronLeft className="h-4 w-4" />
-        Torna agli eventi
-      </Link>
-
-      <header className="mb-6">
-        <h1 className="font-serif text-2xl text-primary sm:text-3xl">{event.name}</h1>
-        <div className="mt-2 flex items-center gap-3">
-          <StatusTag status={event.status} />
-          <p className="text-xs text-muted-foreground">Visualizza solo (modificabile solo da admin)</p>
+    <AppShell area="user" title="Evento" back="/u/eventi">
+      {q.isLoading ? (
+        <Loading />
+      ) : q.isError || !q.data ? (
+        <div className="mt-6">
+          <ErrorBox error={q.error} />
         </div>
-      </header>
+      ) : (
+        (() => {
+          const { event: e, partecipazione: p, team, load_rows } = q.data;
+          const closed = e.stato === "annullato" || e.stato === "chiuso";
+          const canAnswer = !closed && (p.stato === "pending" || p.stato === "available" || p.stato === "unavailable");
+          return (
+            <>
+              <section className="pt-5">
+                <p className="eyebrow text-accent">{e.code}</p>
+                <h2 className="mt-1 font-serif text-2xl text-primary">{e.nome}</h2>
+                <p className="mt-1 text-sm text-foreground">{formatDateLong(e.data)}</p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {closed ? <StatusTag status={e.stato} /> : <ParticipantTag status={p.stato} />}
+                </div>
+              </section>
 
-      {/* Detail grid */}
-      <section className="mb-6">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <InfoCard icon={MapPin} label="Luogo" value={event.place} />
-          <InfoCard icon={Calendar} label="Data" value={event.date} />
-          <InfoCard icon={Clock} label="Ritrovo" value={event.meetTime || "—"} />
-          <InfoCard icon={Clock} label="Inizio" value={event.timeStart} />
-          <InfoCard icon={Clock} label="Fine" value={event.timeEnd} />
-          <InfoCard icon={Phone} label="Contatto" value={`${event.contactName || "—"} ${event.contactPhone || ""}`} />
-        </div>
-      </section>
+              {e.stato === "annullato" && (
+                <Card className="mt-5 border-destructive/40">
+                  <p className="text-sm text-destructive">Evento annullato{e.motivo_annullamento ? `: ${e.motivo_annullamento}` : "."}</p>
+                </Card>
+              )}
 
-      {event.notes && (
-        <Card className="mb-6">
-          <div className="flex items-start gap-3">
-            <FileText className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" strokeWidth={1.5} />
-            <div>
-              <p className="eyebrow mb-1 text-muted-foreground">Note</p>
-              <p className="whitespace-pre-wrap text-sm text-foreground">{event.notes}</p>
-            </div>
-          </div>
-        </Card>
+              <Card className="mt-5">
+                {e.ora_ritrovo && <Field label="Ritrovo">{e.ora_ritrovo}</Field>}
+                <Field label="Orario">{timeRange(e.ora_inizio, e.ora_fine)}</Field>
+                <Field label="Luogo">{e.luogo || "Da definire"}</Field>
+                {e.tipo && <Field label="Tipo">{e.tipo}</Field>}
+                {p.ruolo_evento && <Field label="Il tuo ruolo">{p.ruolo_evento}</Field>}
+                {e.descrizione && <Field label="Descrizione">{e.descrizione}</Field>}
+              </Card>
+
+              {canAnswer && (
+                <Card className="mt-5 grid gap-3">
+                  <SectionTitle>{p.stato === "pending" ? "Sei disponibile?" : "Vuoi cambiare risposta?"}</SectionTitle>
+                  <textarea
+                    value={nota}
+                    onChange={(ev) => setNota(ev.target.value)}
+                    rows={2}
+                    placeholder="Nota per l'ufficio (facoltativa), es. «arrivo alle 19»"
+                    className="w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button type="button" disabled={answer.isPending || p.stato === "available"} onClick={() => answer.mutate("available")}>
+                      <Check className="h-4 w-4" /> Disponibile
+                    </Button>
+                    <Button type="button" variant="outline" disabled={answer.isPending || p.stato === "unavailable"} onClick={() => answer.mutate("unavailable")}>
+                      <X className="h-4 w-4" /> Non disponibile
+                    </Button>
+                  </div>
+                  {p.stato === "available" && <p className="text-xs text-muted-foreground">Hai dato disponibilità: ora l'ufficio deciderà chi confermare.</p>}
+                </Card>
+              )}
+
+              {p.stato === "rejected" && (
+                <Card className="mt-5">
+                  <p className="text-sm text-muted-foreground">Per questo evento l'ufficio ha scelto altre persone. Grazie per la disponibilità!</p>
+                </Card>
+              )}
+
+              {p.stato === "confirmed" && (
+                <>
+                  <Card className="mt-5">
+                    <SectionTitle>Informazioni per te</SectionTitle>
+                    <Field label="Operative">{e.info_operative || "—"}</Field>
+                    {e.referente_nome && (
+                      <Field label="Referente">
+                        {e.referente_nome}
+                        {e.referente_telefono && (
+                          <a href={`tel:${e.referente_telefono}`} className="ml-2 inline-flex items-center gap-1 text-accent underline">
+                            <Phone className="h-3.5 w-3.5" /> {e.referente_telefono}
+                          </a>
+                        )}
+                      </Field>
+                    )}
+                    {e.compenso && <Field label="Compenso">{e.compenso}</Field>}
+                  </Card>
+
+                  {team.length > 0 && (
+                    <Card className="mt-5">
+                      <SectionTitle>Squadra confermata</SectionTitle>
+                      <ul>
+                        {team.map((t, i) => (
+                          <li key={i} className="border-b border-border py-2 text-sm last:border-b-0">
+                            {t.nome} {t.cognome}
+                            {t.ruolo_evento && <span className="text-muted-foreground"> · {t.ruolo_evento}</span>}
+                          </li>
+                        ))}
+                      </ul>
+                    </Card>
+                  )}
+
+                  <Card className="mt-5">
+                    <SectionTitle>La mia bolla di carico</SectionTitle>
+                    {load_rows.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">Nessun oggetto assegnato a te per questo evento.</p>
+                    ) : (
+                      <>
+                        <p className="text-sm text-foreground">
+                          {load_rows.length} oggetti · {load_rows.filter((r) => r.present).length} presenti · {load_rows.filter((r) => r.returned).length} rientrati
+                        </p>
+                        <Link to="/u/bolla/$code" params={{ code: e.code }} className="mt-3 flex min-h-12 items-center justify-center gap-2 rounded-lg bg-accent text-sm font-semibold uppercase tracking-[0.08em] text-accent-foreground">
+                          <ClipboardCheck className="h-4 w-4" /> Apri e compila la bolla
+                        </Link>
+                      </>
+                    )}
+                  </Card>
+                </>
+              )}
+            </>
+          );
+        })()
       )}
-
-      {/* Status */}
-      <Card className={isConfirmed ? "border-success/30" : "border-border"}>
-        <div className="flex items-center gap-3">
-          <div
-            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
-              isConfirmed ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
-            }`}
-          >
-            <ShieldCheck className="h-6 w-6" strokeWidth={1.5} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-foreground">
-              {isConfirmed ? "Sei confermato come animatore" : "Non sei ancora confermato"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {isConfirmed
-                ? "L'ufficio ti ha inserito tra gli animatori per questo evento."
-                : "Hai segnalato disponibilita, ma l'ufficio non ti ha ancora confermato."}
-            </p>
-          </div>
-          {isTL && (
-            <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-gold/15 px-3 py-1 text-xs font-semibold text-gold-foreground">
-              <Star className="h-3.5 w-3.5 fill-gold text-gold" />
-              Team Leader
-            </div>
-          )}
-        </div>
-      </Card>
-    </main>
-  );
-}
-
-function InfoCard({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof MapPin;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-4 shadow-[var(--shadow-card)]">
-      <div className="flex items-center gap-2">
-        <Icon className="h-4 w-4 text-accent" strokeWidth={1.5} />
-        <p className="eyebrow text-muted-foreground">{label}</p>
-      </div>
-      <p className="mt-2 text-sm font-medium text-foreground">{value}</p>
-    </div>
+    </AppShell>
   );
 }
