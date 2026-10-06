@@ -358,13 +358,24 @@ function BollaTab({ code, rows, participants }: { code: string; rows: LoadRow[];
         <strong>Prep</strong> = preparato in magazzino (lo spunti tu). <strong>Entrata</strong> e <strong>Uscita</strong> = le spunte dell'animatore all'inizio e alla fine dell'evento.
       </p>
 
+      {groups.length > 1 && (
+        <div className="-mt-2 flex gap-2">
+          <button type="button" onClick={() => setOpen(Object.fromEntries(groups.map(([g]) => [g, true])))} className="min-h-9 flex-1 rounded-lg border border-border-strong text-xs font-semibold text-muted-foreground">
+            Apri tutti i gruppi
+          </button>
+          <button type="button" onClick={() => setOpen(Object.fromEntries(groups.map(([g]) => [g, false])))} className="min-h-9 flex-1 rounded-lg border border-border-strong text-xs font-semibold text-muted-foreground">
+            Chiudi tutti i gruppi
+          </button>
+        </div>
+      )}
+
       {rows.length === 0 ? (
         <Card>
           <p className="text-sm text-muted-foreground">La bolla è vuota. Aggiungi le voci qui sotto o importale da un file Excel.</p>
         </Card>
       ) : (
         groups.map(([cat, list]) => {
-          const isOpen = open[cat] ?? groups.length <= 3;
+          const isOpen = open[cat] ?? true;
           const owners = [...new Set(list.map((r) => r.assigned_user_id ?? 0))];
           const groupOwner = owners.length === 1 ? owners[0]! : -1;
           const done = list.filter((r) => r.returned).length;
@@ -379,7 +390,7 @@ function BollaTab({ code, rows, participants }: { code: string; rows: LoadRow[];
                     {warn && <span className="font-semibold text-destructive"> · segnalazioni</span>}
                   </span>
                 </span>
-                <span className="text-lg text-muted-foreground">{isOpen ? "−" : "+"}</span>
+                <span className="shrink-0 text-xs font-semibold text-accent">{isOpen ? "Chiudi ▲" : "Apri ▼"}</span>
               </button>
               <div className="flex items-center gap-2 border-b border-border px-4 py-2">
                 <span className="eyebrow shrink-0 text-muted-foreground">Gruppo a</span>
@@ -417,11 +428,11 @@ function BollaTab({ code, rows, participants }: { code: string; rows: LoadRow[];
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
-                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                        <Flag label="Prep" on={r.prep} onClick={() => patch.mutate({ id: r.id, prep: !r.prep })} />
-                        <Flag label="Entrata" on={r.present} onClick={() => patch.mutate({ id: r.id, present: !r.present })} />
-                        <Flag label="Uscita" on={r.returned} onClick={() => patch.mutate({ id: r.id, returned: !r.returned })} />
-                        <Flag label="Danni" on={r.damaged} danger onClick={() => patch.mutate({ id: r.id, damaged: !r.damaged })} />
+                      <div className="mt-2 grid grid-cols-4 gap-1.5">
+                        <BigCheck label="Prep" on={r.prep} onClick={() => patch.mutate({ id: r.id, prep: !r.prep })} />
+                        <BigCheck label="Entrata" on={r.present} onClick={() => patch.mutate({ id: r.id, present: !r.present })} />
+                        <BigCheck label="Uscita" on={r.returned} onClick={() => patch.mutate({ id: r.id, returned: !r.returned })} />
+                        <BigCheck label="Danni" on={r.damaged} danger onClick={() => patch.mutate({ id: r.id, damaged: !r.damaged })} />
                       </div>
                       {r.comment && (
                         <p className="mt-2 flex items-start gap-1.5 rounded-md bg-muted px-2 py-1.5 text-xs">
@@ -472,6 +483,23 @@ function BollaTab({ code, rows, participants }: { code: string; rows: LoadRow[];
         onImport={(list: ImportRow[]) => add.mutate({ rows: list }, { onSuccess: () => setImportKey((k) => k + 1) })}
       />
     </div>
+  );
+}
+
+function BigCheck({ label, on, onClick, danger }: { label: string; on: boolean; onClick: () => void; danger?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={on}
+      className={cn(
+        "flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-lg border text-[11px] font-semibold",
+        on ? (danger ? "border-destructive bg-destructive text-white" : "border-success bg-success text-white") : "border-border-strong bg-surface text-muted-foreground",
+      )}
+    >
+      <span className={cn("flex h-4 w-4 items-center justify-center rounded border", on ? "border-white" : "border-border-strong")}>{on && <Check className="h-3 w-3" />}</span>
+      {label}
+    </button>
   );
 }
 
