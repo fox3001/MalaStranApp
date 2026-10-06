@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "malastranapp-web-front",
+  "name": "malastranapp-web",
   "compatibility_date": "2025-09-01",
   "assets": {
     "directory": "./dist",
