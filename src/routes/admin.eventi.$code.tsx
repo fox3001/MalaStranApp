@@ -5,7 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { BollaImport, type ImportRow } from "@/components/BollaImport";
 import { EventForm } from "@/components/EventForm";
 import { Button, Card, ErrorBox, Field, Loading, ParticipantTag, SectionTitle, StatusTag } from "@/components/ui-kit";
-import { downloadText, useAdminEvent, useAdminUsers, useApiMutation, useResoconto, type LoadRow, type MalEvent, type Participant, type ParticipantStatus } from "@/lib/api";
+import { downloadText, groupRows, useAdminEvent, useAdminUsers, useApiMutation, useResoconto, type LoadRow, type MalEvent, type Participant, type ParticipantStatus } from "@/lib/api";
 import { PARTICIPANT_LABEL, formatDate, formatDateLong, timeRange } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -308,6 +308,7 @@ function SmallBtn({ children, onClick, tone }: { children: React.ReactNode; onCl
 
 function BollaTab({ code, rows, participants }: { code: string; rows: LoadRow[]; participants: Participant[] }) {
   const [importKey, setImportKey] = useState(0);
+  const [open, setOpen] = useState<Record<string, boolean>>({});
   const add = useApiMutation<Record<string, unknown>>("admin", (body) => ({ path: `/admin/events/${code}/load-rows`, method: "POST", body }), {
     success: "Bolla aggiornata",
     invalidate: [["events"], ["report"]],
@@ -315,8 +316,13 @@ function BollaTab({ code, rows, participants }: { code: string; rows: LoadRow[];
   const patch = useApiMutation<{ id: number } & Partial<Record<string, unknown>>>("admin", ({ id, ...body }) => ({ path: `/admin/load-rows/${id}`, method: "PATCH", body }), {
     invalidate: [["events"], ["report"]],
   });
+  const assignGroup = useApiMutation<{ categoria: string; assigned_user_id: number | null }>("admin", (body) => ({ path: `/admin/events/${code}/load-rows/assign`, method: "POST", body }), {
+    success: "Gruppo assegnato",
+    invalidate: [["events"], ["report"]],
+  });
   const del = useApiMutation<number>("admin", (id) => ({ path: `/admin/load-rows/${id}`, method: "DELETE" }), { invalidate: [["events"], ["report"]] });
   const assignable = participants.filter((p) => p.stato !== "rejected" && p.stato !== "unavailable");
+  const groups = groupRows(rows);
 
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -327,8 +333,7 @@ function BollaTab({ code, rows, participants }: { code: string; rows: LoadRow[];
       {
         item: String(f.get("item") || ""),
         categoria: String(f.get("categoria") || ""),
-        codice: String(f.get("codice") || ""),
-        taglia: String(f.get("taglia") || ""),
+        note: String(f.get("note") || ""),
         quantita: Number(f.get("quantita") || 1),
         assigned_user_id: assigned > 0 ? assigned : null,
       },
@@ -342,81 +347,118 @@ function BollaTab({ code, rows, participants }: { code: string; rows: LoadRow[];
   return (
     <div className="grid gap-5">
       {rows.length > 0 && (
-        <div className="grid grid-cols-3 gap-2 text-center">
-          <Counter label="Presenti" value={`${rows.filter((r) => r.present).length}/${rows.length}`} />
-          <Counter label="Rientrati" value={`${rows.filter((r) => r.returned).length}/${rows.length}`} />
-          <Counter label="Segnalazioni" value={String(issues)} warn={issues > 0} />
+        <div className="grid grid-cols-4 gap-2 text-center">
+          <Counter label="Prep" value={`${rows.filter((r) => r.prep).length}/${rows.length}`} />
+          <Counter label="Entrata" value={`${rows.filter((r) => r.present).length}/${rows.length}`} />
+          <Counter label="Uscita" value={`${rows.filter((r) => r.returned).length}/${rows.length}`} />
+          <Counter label="Segnal." value={String(issues)} warn={issues > 0} />
         </div>
       )}
+      <p className="-mt-2 text-xs text-muted-foreground">
+        <strong>Prep</strong> = preparato in magazzino (lo spunti tu). <strong>Entrata</strong> e <strong>Uscita</strong> = le spunte dell'animatore all'inizio e alla fine dell'evento.
+      </p>
 
       {rows.length === 0 ? (
         <Card>
-          <p className="text-sm text-muted-foreground">La bolla è vuota. Aggiungi gli oggetti qui sotto o importali da un file Excel.</p>
+          <p className="text-sm text-muted-foreground">La bolla è vuota. Aggiungi le voci qui sotto o importale da un file Excel.</p>
         </Card>
       ) : (
-        <ul className="overflow-hidden rounded-xl border border-border bg-card shadow-[var(--shadow-card)]">
-          {rows.map((r) => (
-            <li key={r.id} className={cn("border-b border-border px-4 py-3 last:border-b-0", r.damaged && "bg-destructive/5")}>
-              <div className="flex items-start justify-between gap-2">
+        groups.map(([cat, list]) => {
+          const isOpen = open[cat] ?? groups.length <= 3;
+          const owners = [...new Set(list.map((r) => r.assigned_user_id ?? 0))];
+          const groupOwner = owners.length === 1 ? owners[0]! : -1;
+          const done = list.filter((r) => r.returned).length;
+          const warn = list.some((r) => r.damaged || r.comment);
+          return (
+            <section key={cat} className="overflow-hidden rounded-xl border border-border bg-card shadow-[var(--shadow-card)]">
+              <button type="button" onClick={() => setOpen((o) => ({ ...o, [cat]: !isOpen }))} className="flex w-full items-center justify-between gap-2 bg-secondary px-4 py-3 text-left">
                 <span className="min-w-0">
-                  <span className="block text-sm font-medium text-foreground">
-                    {r.quantita > 1 && `${r.quantita}× `}
-                    {r.item}
+                  <span className="block truncate font-serif text-base text-primary">{cat}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    {list.length} voci · prep {list.filter((r) => r.prep).length} · entrata {list.filter((r) => r.present).length} · uscita {done}
+                    {warn && <span className="font-semibold text-destructive"> · segnalazioni</span>}
                   </span>
-                  <span className="block text-xs text-muted-foreground">{[r.categoria, r.codice, r.taglia && `tg ${r.taglia}`].filter(Boolean).join(" · ") || "—"}</span>
                 </span>
-                <button type="button" aria-label="Elimina riga" onClick={() => window.confirm(`Togliere "${r.item}" dalla bolla?`) && del.mutate(r.id)} className="rounded p-1.5 text-muted-foreground">
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <span className="text-lg text-muted-foreground">{isOpen ? "−" : "+"}</span>
+              </button>
+              <div className="flex items-center gap-2 border-b border-border px-4 py-2">
+                <span className="eyebrow shrink-0 text-muted-foreground">Gruppo a</span>
+                <select
+                  value={groupOwner}
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    if (v >= 0) assignGroup.mutate({ categoria: cat === "Senza gruppo" ? "" : cat, assigned_user_id: v || null });
+                  }}
+                  className="min-h-9 flex-1 rounded-md border border-border bg-surface px-2 text-xs"
+                >
+                  {groupOwner === -1 && <option value={-1}>Misto (persone diverse)</option>}
+                  <option value={0}>Non assegnato</option>
+                  {assignable.map((p) => (
+                    <option key={p.user_id} value={p.user_id}>
+                      {p.nome} {p.cognome}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <select
-                value={r.assigned_user_id ?? 0}
-                onChange={(e) => patch.mutate({ id: r.id, assigned_user_id: Number(e.target.value) || null })}
-                className="mt-2 min-h-9 w-full rounded-md border border-border bg-surface px-2 text-xs"
-              >
-                <option value={0}>Non assegnato</option>
-                {assignable.map((p) => (
-                  <option key={p.user_id} value={p.user_id}>
-                    {p.nome} {p.cognome}
-                  </option>
-                ))}
-              </select>
-              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                <Flag label="Presente" on={r.present} onClick={() => patch.mutate({ id: r.id, present: !r.present })} />
-                <Flag label="Rientrato" on={r.returned} onClick={() => patch.mutate({ id: r.id, returned: !r.returned })} />
-                <Flag label="Danni" on={r.damaged} danger onClick={() => patch.mutate({ id: r.id, damaged: !r.damaged })} />
-              </div>
-              {r.comment && (
-                <p className="mt-2 flex items-start gap-1.5 rounded-md bg-muted px-2 py-1.5 text-xs">
-                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" /> {r.comment}
-                </p>
+              {isOpen && (
+                <ul>
+                  {list.map((r) => (
+                    <li key={r.id} className={cn("border-b border-border px-4 py-3 last:border-b-0", r.damaged && "bg-destructive/5")}>
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="min-w-0">
+                          <span className="block text-sm font-medium text-foreground">
+                            {r.quantita > 1 && `${r.quantita}× `}
+                            {r.item}
+                          </span>
+                          {r.note && <span className="block text-xs text-muted-foreground">{r.note}</span>}
+                          {groupOwner === -1 && <span className="block text-xs text-accent">{r.assigned_name || "non assegnato"}</span>}
+                        </span>
+                        <button type="button" aria-label="Elimina riga" onClick={() => window.confirm(`Togliere "${r.item}" dalla bolla?`) && del.mutate(r.id)} className="rounded p-1.5 text-muted-foreground">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                        <Flag label="Prep" on={r.prep} onClick={() => patch.mutate({ id: r.id, prep: !r.prep })} />
+                        <Flag label="Entrata" on={r.present} onClick={() => patch.mutate({ id: r.id, present: !r.present })} />
+                        <Flag label="Uscita" on={r.returned} onClick={() => patch.mutate({ id: r.id, returned: !r.returned })} />
+                        <Flag label="Danni" on={r.damaged} danger onClick={() => patch.mutate({ id: r.id, damaged: !r.damaged })} />
+                      </div>
+                      {r.comment && (
+                        <p className="mt-2 flex items-start gap-1.5 rounded-md bg-muted px-2 py-1.5 text-xs">
+                          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" /> {r.comment}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
               )}
-              {r.updated_by && r.updated_by !== "admin" && <p className="mt-1 text-[11px] text-muted-foreground">Ultima modifica: {r.updated_by}</p>}
-            </li>
-          ))}
-        </ul>
+            </section>
+          );
+        })
       )}
 
       <Card>
-        <SectionTitle>Aggiungi oggetto</SectionTitle>
+        <SectionTitle>Aggiungi voce</SectionTitle>
         <form onSubmit={submit} className="grid gap-2">
-          <input name="item" required placeholder="Oggetto / costume *" className={input} />
-          <div className="grid grid-cols-2 gap-2">
-            <input name="categoria" placeholder="Categoria" className={input} />
-            <input name="codice" placeholder="Codice" className={input} />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <input name="taglia" placeholder="Taglia" className={input} />
-            <input name="quantita" type="number" min={1} defaultValue={1} className={input} />
-          </div>
-          <select name="assigned" defaultValue={0} className={input}>
-            <option value={0}>Non assegnato</option>
-            {assignable.map((p) => (
-              <option key={p.user_id} value={p.user_id}>
-                {p.nome} {p.cognome}
-              </option>
+          <input name="item" required placeholder="Nome (oggetto, costume, kit…) *" className={input} />
+          <input name="categoria" list="bolla-gruppi" placeholder="Sezione · gruppo (es. Costumi · Dr Harkin)" className={input} />
+          <datalist id="bolla-gruppi">
+            {groups.map(([g]) => (
+              <option key={g} value={g} />
             ))}
-          </select>
+          </datalist>
+          <input name="note" placeholder="Note / destinazione (es. stanza figlio, nel kit)" className={input} />
+          <div className="grid grid-cols-[6rem_1fr] gap-2">
+            <input name="quantita" type="number" min={1} defaultValue={1} className={input} />
+            <select name="assigned" defaultValue={0} className={input}>
+              <option value={0}>Non assegnato</option>
+              {assignable.map((p) => (
+                <option key={p.user_id} value={p.user_id}>
+                  {p.nome} {p.cognome}
+                </option>
+              ))}
+            </select>
+          </div>
           <Button type="submit" disabled={add.isPending}>
             Aggiungi alla bolla
           </Button>
@@ -488,7 +530,7 @@ function ResocontoTab({ code }: { code: string }) {
 
       <div className="grid grid-cols-3 gap-2 text-center">
         <Counter label="Confermati" value={`${s.persone.confermati}/${s.persone.invitati}`} />
-        <Counter label="Rientrati" value={`${s.bolla.rientrati}/${s.bolla.oggetti}`} warn={s.bolla.non_rientrati > 0} />
+        <Counter label="Uscite" value={`${s.bolla.rientrati}/${s.bolla.oggetti}`} warn={s.bolla.non_rientrati > 0} />
         <Counter label="Danni" value={String(s.bolla.danneggiati)} warn={s.bolla.danneggiati > 0} />
       </div>
 
@@ -503,14 +545,14 @@ function ResocontoTab({ code }: { code: string }) {
                 <span className="font-medium">{r.item}</span> <span className="text-muted-foreground">· {r.assigned_name || "non assegnato"}</span>
                 <span className="mt-0.5 block text-xs">
                   {r.damaged && <span className="mr-2 font-semibold text-destructive">Danneggiato</span>}
-                  {r.present && !r.returned && <span className="mr-2 font-semibold text-warning-foreground">Non rientrato</span>}
+                  {r.present && !r.returned && <span className="mr-2 font-semibold text-warning-foreground">Entrata senza uscita</span>}
                   {r.comment && <span className="text-foreground">“{r.comment}”</span>}
                 </span>
               </li>
             ))}
           </ul>
         )}
-        {s.bolla.mai_segnati_presenti > 0 && <p className="mt-2 text-xs text-muted-foreground">{s.bolla.mai_segnati_presenti} oggetti non sono mai stati segnati come presenti.</p>}
+        {s.bolla.mai_segnati_presenti > 0 && <p className="mt-2 text-xs text-muted-foreground">{s.bolla.mai_segnati_presenti} voci senza la spunta di entrata.</p>}
       </Card>
 
       <Card>

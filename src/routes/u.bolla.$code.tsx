@@ -3,7 +3,7 @@ import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Card, Empty, ErrorBox, Loading, PageTitle } from "@/components/ui-kit";
-import { useApiMutation, useMyEvent, type LoadRow } from "@/lib/api";
+import { groupRows, useApiMutation, useMyEvent, type LoadRow } from "@/lib/api";
 import { formatDateLong } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +12,7 @@ export const Route = createFileRoute("/u/bolla/$code")({ component: BollaUser })
 function BollaUser() {
   const { code } = Route.useParams();
   const q = useMyEvent(code);
+  const rows = q.data?.load_rows ?? [];
 
   return (
     <AppShell area="user" title="Bolla di carico" back={`/u/eventi/${code}`}>
@@ -24,14 +25,30 @@ function BollaUser() {
       ) : (
         <>
           <PageTitle eyebrow={q.data.event.code} title={q.data.event.nome} subtitle={formatDateLong(q.data.event.data)} />
-          <p className="mt-3 text-sm text-muted-foreground">Spunta quando l'oggetto è con te (presente) e quando lo hai restituito (rientrato). Se è rovinato segna «Danni» e scrivi cosa è successo.</p>
-          <section className="mt-5 grid gap-3">
+          <p className="mt-3 text-sm text-muted-foreground">
+            <strong>Entrata</strong>: quando arrivi e hai l'oggetto. <strong>Uscita</strong>: a fine evento, quando lo rimetti a posto. Se è rovinato tocca <strong>Danni</strong> e scrivi cosa è successo.
+          </p>
+          {rows.length > 0 && (
+            <p className="mt-3 text-sm font-semibold text-foreground">
+              Entrata {rows.filter((r) => r.present).length}/{rows.length} · Uscita {rows.filter((r) => r.returned).length}/{rows.length}
+            </p>
+          )}
+          <section className="mt-5 grid gap-6">
             {q.data.partecipazione.stato !== "confirmed" ? (
               <Empty>La bolla si compila dopo la conferma per l'evento.</Empty>
-            ) : q.data.load_rows.length === 0 ? (
-              <Empty>Nessun oggetto assegnato a te.</Empty>
+            ) : rows.length === 0 ? (
+              <Empty>Nessuna voce assegnata a te.</Empty>
             ) : (
-              q.data.load_rows.map((r) => <Row key={r.id} row={r} />)
+              groupRows(rows).map(([cat, list]) => (
+                <div key={cat}>
+                  <h3 className="eyebrow mb-2 border-b border-border pb-1 text-primary">{cat}</h3>
+                  <div className="grid gap-3">
+                    {list.map((r) => (
+                      <Row key={r.id} row={r} />
+                    ))}
+                  </div>
+                </div>
+              ))
             )}
           </section>
         </>
@@ -48,15 +65,15 @@ function Row({ row }: { row: LoadRow }) {
   });
 
   return (
-    <Card className={cn(row.damaged && "border-destructive/40 bg-destructive/5")}>
-      <p className="font-serif text-lg text-foreground">
+    <Card className={cn("p-4", row.damaged && "border-destructive/40 bg-destructive/5")}>
+      <p className="font-serif text-lg leading-snug text-foreground">
         {row.quantita > 1 && `${row.quantita}× `}
         {row.item}
       </p>
-      <p className="text-xs text-muted-foreground">{[row.categoria, row.codice, row.taglia && `tg ${row.taglia}`].filter(Boolean).join(" · ") || " "}</p>
+      {row.note && <p className="text-xs text-muted-foreground">{row.note}</p>}
       <div className="mt-3 grid grid-cols-3 gap-2">
-        <Check3 label="Presente" on={row.present} disabled={save.isPending} onClick={() => save.mutate({ present: !row.present })} />
-        <Check3 label="Rientrato" on={row.returned} disabled={save.isPending} onClick={() => save.mutate({ returned: !row.returned })} />
+        <Check3 label="Entrata" on={row.present} disabled={save.isPending} onClick={() => save.mutate({ present: !row.present })} />
+        <Check3 label="Uscita" on={row.returned} disabled={save.isPending} onClick={() => save.mutate({ returned: !row.returned })} />
         <Check3 label="Danni" danger on={row.damaged} disabled={save.isPending} onClick={() => save.mutate({ damaged: !row.damaged })} />
       </div>
       <div className="mt-3 flex gap-2">

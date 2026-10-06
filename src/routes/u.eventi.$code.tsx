@@ -123,7 +123,7 @@ function EventoUser() {
                     ) : (
                       <>
                         <p className="text-sm text-foreground">
-                          {load_rows.length} oggetti · {load_rows.filter((r) => r.present).length} presenti · {load_rows.filter((r) => r.returned).length} rientrati
+                          {load_rows.length} voci · entrata {load_rows.filter((r) => r.present).length} · uscita {load_rows.filter((r) => r.returned).length}
                         </p>
                         <Link to="/u/bolla/$code" params={{ code: e.code }} className="mt-3 flex min-h-12 items-center justify-center gap-2 rounded-lg bg-accent text-sm font-semibold uppercase tracking-[0.08em] text-accent-foreground">
                           <ClipboardCheck className="h-4 w-4" /> Apri e compila la bolla

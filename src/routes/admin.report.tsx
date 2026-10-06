@@ -28,7 +28,7 @@ function Report() {
             </option>
           ))}
         </SelectInput>
-        <Toggle checked={onlyIssues} onChange={setOnlyIssues} label="Solo danni, commenti e oggetti non rientrati" />
+        <Toggle checked={onlyIssues} onChange={setOnlyIssues} label="Solo danni, commenti e voci entrate ma non uscite" />
         {rows.length > 0 && (
           <Button type="button" variant="outline" onClick={() => downloadCsv(rows)}>
             <Download className="h-4 w-4" /> Scarica per Excel (CSV)
@@ -55,7 +55,7 @@ function Report() {
                   <span className="font-normal text-muted-foreground"> · {r.assigned_name || "non assegnato"}</span>
                 </p>
                 <p className="mt-1 text-xs">
-                  <Mark on={r.present}>Presente</Mark> · <Mark on={r.returned}>Rientrato</Mark> ·{" "}
+                  <Mark on={r.prep}>Prep</Mark> · <Mark on={r.present}>Entrata</Mark> · <Mark on={r.returned}>Uscita</Mark> ·{" "}
                   <span className={r.damaged ? "font-semibold text-destructive" : "text-muted-foreground"}>{r.damaged ? "DANNEGGIATO" : "nessun danno"}</span>
                 </p>
                 {r.comment && <p className="mt-1.5 rounded-md bg-muted px-2 py-1.5 text-xs">“{r.comment}”</p>}
@@ -73,10 +73,10 @@ function Mark({ on, children }: { on: boolean; children: string }) {
 }
 
 function downloadCsv(rows: ReportRow[]) {
-  const head = ["Data", "Evento", "Codice evento", "Oggetto", "Categoria", "Codice", "Taglia", "Quantità", "Assegnato a", "Presente", "Rientrato", "Danni", "Commento"];
+  const head = ["Data", "Evento", "Codice evento", "Sezione/gruppo", "Nome", "Quantità", "Note", "Assegnato a", "Prep", "Entrata", "Uscita", "Danni", "Commento"];
   const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const lines = rows.map((r) =>
-    [r.event_data, r.event_nome, r.event_code, r.item, r.categoria, r.codice, r.taglia, r.quantita, r.assigned_name, r.present ? "sì" : "no", r.returned ? "sì" : "no", r.damaged ? "sì" : "no", r.comment].map(esc).join(";"),
+    [r.event_data, r.event_nome, r.event_code, r.categoria, r.item, r.quantita, r.note, r.assigned_name, r.prep ? "sì" : "no", r.present ? "sì" : "no", r.returned ? "sì" : "no", r.damaged ? "sì" : "no", r.comment].map(esc).join(";"),
   );
   const blob = new Blob(["﻿" + [head.map(esc).join(";"), ...lines].join("\n")], { type: "text/csv;charset=utf-8" });
   const a = document.createElement("a");

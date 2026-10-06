@@ -7,6 +7,9 @@ import type { Participant } from "@/lib/api";
 export interface ImportRow {
   item: string;
   categoria: string;
+  sezione: string;
+  gruppo: string;
+  note: string;
   codice: string;
   taglia: string;
   quantita: number;
@@ -16,7 +19,8 @@ export interface ImportRow {
 
 const HEADERS: Record<string, keyof ImportRow> = {
   oggetto: "item", nome: "item", articolo: "item", costume: "item", item: "item", descrizione: "item",
-  categoria: "categoria", tipo: "categoria",
+  categoria: "categoria", tipo: "categoria", sezione: "sezione", gruppo: "gruppo", personaggio: "gruppo",
+  note: "note", destinazione: "note", dove: "note",
   codice: "codice", code: "codice",
   taglia: "taglia", size: "taglia",
   quantita: "quantita", "quantità": "quantita", qta: "quantita", "q.tà": "quantita", qty: "quantita", pezzi: "quantita",
@@ -48,7 +52,7 @@ export function BollaImport({ participants, onImport, busy }: { participants: Pa
       const raw = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
       const parsed: ImportRow[] = [];
       for (const r of raw) {
-        const row: ImportRow = { item: "", categoria: "", codice: "", taglia: "", quantita: 1, assigned_user_id: null, assegnato_testo: "" };
+        const row: ImportRow = { item: "", categoria: "", sezione: "", gruppo: "", note: "", codice: "", taglia: "", quantita: 1, assigned_user_id: null, assegnato_testo: "" };
         for (const [k, val] of Object.entries(r)) {
           const field = HEADERS[norm(k)];
           if (!field) continue;
@@ -58,6 +62,13 @@ export function BollaImport({ participants, onImport, busy }: { participants: Pa
           } else if (field !== "assigned_user_id") row[field] = String(val).trim();
         }
         if (!row.item) continue;
+        if (!row.categoria) row.categoria = [row.sezione, row.gruppo].filter(Boolean).join(" · ");
+        // "Vademecum del detective, 80" → quantità 80
+        const m = /^(.*?),\s*(\d+)$/.exec(row.item);
+        if (m && row.quantita === 1) {
+          row.item = m[1]!.trim();
+          row.quantita = Number(m[2]);
+        }
         row.assigned_user_id = findUser(row.assegnato_testo);
         parsed.push(row);
       }
@@ -75,7 +86,7 @@ export function BollaImport({ participants, onImport, busy }: { participants: Pa
         <FileSpreadsheet className="h-4 w-4 text-accent" /> Importa da Excel o CSV
       </p>
       <p className="mt-1 text-xs text-muted-foreground">
-        Colonne riconosciute: Oggetto, Categoria, Codice, Taglia, Quantità, Assegnato (username oppure «Nome Cognome» di uno user invitato).
+        Colonne riconosciute: Sezione, Gruppo, Nome (o Oggetto), Quantità, Note, Codice, Taglia, Assegnato (username oppure «Nome Cognome» di uno user invitato).
       </p>
       <input
         type="file"

@@ -155,6 +155,8 @@ export interface LoadRow {
   present: boolean;
   returned: boolean;
   damaged: boolean;
+  prep: boolean;
+  note: string;
   comment: string;
   updated_by: string;
   updated_at: string;
@@ -294,4 +296,14 @@ export function downloadText(filename: string, text: string) {
   a.download = filename;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/** Raggruppa le righe della bolla per sezione/gruppo, mantenendo l'ordine originale. */
+export function groupRows<T extends { categoria: string }>(rows: T[]): Array<[string, T[]]> {
+  const map = new Map<string, T[]>();
+  for (const r of rows) {
+    const k = r.categoria || "Senza gruppo";
+    map.set(k, [...(map.get(k) ?? []), r]);
+  }
+  return [...map.entries()];
 }
