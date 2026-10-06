@@ -58,12 +58,12 @@ export function AppShell({ area, title, children, back }: AppShellProps) {
       aria-label="Notifiche"
       className={cn(
         "relative inline-flex h-10 w-10 items-center justify-center rounded-lg transition-colors",
-        isAdmin ? "text-primary active:bg-muted" : "text-white active:bg-white/20",
+        "text-white active:bg-white/20",
       )}
     >
       <Bell className="h-5 w-5" strokeWidth={1.5} />
       {unread > 0 && (
-        <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground">
+        <span className={cn("absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold", isAdmin ? "bg-white text-accent" : "bg-accent text-accent-foreground")}>
           {unread > 99 ? "99+" : unread}
         </span>
       )}
@@ -72,7 +72,7 @@ export function AppShell({ area, title, children, back }: AppShellProps) {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className={cn("sticky top-0 z-40 border-b border-border-strong pt-safe shadow-[var(--shadow-header)]", isAdmin ? "bg-surface/95 backdrop-blur-md" : "bg-primary")}>
+      <header className={cn("sticky top-0 z-40 border-b border-border-strong pt-safe shadow-[var(--shadow-header)]", isAdmin ? "bg-accent" : "bg-primary")}>
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex min-w-0 items-center gap-3">
             {back && (
@@ -81,7 +81,7 @@ export function AppShell({ area, title, children, back }: AppShellProps) {
                 aria-label="Indietro"
                 className={cn(
                   "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition-colors",
-                  isAdmin ? "border-border-strong bg-surface text-primary active:bg-muted" : "border-white/20 bg-white/10 text-white active:bg-white/20",
+                  "border-white/20 bg-white/10 text-white active:bg-white/20",
                 )}
               >
                 <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden="true">
@@ -92,8 +92,8 @@ export function AppShell({ area, title, children, back }: AppShellProps) {
             <div className="min-w-0">
               {isAdmin ? (
                 <>
-                  <p className="eyebrow text-primary/70">Ufficio & regia</p>
-                  <h1 className="truncate font-serif text-xl leading-tight text-primary">{title}</h1>
+                  <p className="eyebrow text-white/70">Ufficio & regia</p>
+                  <h1 className="truncate font-serif text-xl leading-tight text-white">{title}</h1>
                 </>
               ) : (
                 <>
