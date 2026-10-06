@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminArchivioRouteImport } from './routes/admin.archivio'
 import { Route as AdminCalendarioRouteImport } from './routes/admin.calendario'
 import { Route as AdminNotificheRouteImport } from './routes/admin.notifiche'
 import { Route as AdminReportRouteImport } from './routes/admin.report'
@@ -35,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminArchivioRoute = AdminArchivioRouteImport.update({
+  id: '/admin/archivio',
+  path: '/admin/archivio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminCalendarioRoute = AdminCalendarioRouteImport.update({
@@ -115,6 +121,7 @@ const UEventiCodeRoute = UEventiCodeRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin/archivio': typeof AdminArchivioRoute
   '/admin/calendario': typeof AdminCalendarioRoute
   '/admin/notifiche': typeof AdminNotificheRoute
   '/admin/report': typeof AdminReportRoute
@@ -134,6 +141,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin/archivio': typeof AdminArchivioRoute
   '/admin/calendario': typeof AdminCalendarioRoute
   '/admin/notifiche': typeof AdminNotificheRoute
   '/admin/report': typeof AdminReportRoute
@@ -154,6 +162,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin/archivio': typeof AdminArchivioRoute
   '/admin/calendario': typeof AdminCalendarioRoute
   '/admin/notifiche': typeof AdminNotificheRoute
   '/admin/report': typeof AdminReportRoute
@@ -175,6 +184,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin/archivio'
     | '/admin/calendario'
     | '/admin/notifiche'
     | '/admin/report'
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin/archivio'
     | '/admin/calendario'
     | '/admin/notifiche'
     | '/admin/report'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin/archivio'
     | '/admin/calendario'
     | '/admin/notifiche'
     | '/admin/report'
@@ -233,6 +245,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminArchivioRoute: typeof AdminArchivioRoute
   AdminCalendarioRoute: typeof AdminCalendarioRoute
   AdminNotificheRoute: typeof AdminNotificheRoute
   AdminReportRoute: typeof AdminReportRoute
@@ -265,6 +278,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/archivio': {
+      id: '/admin/archivio'
+      path: '/admin/archivio'
+      fullPath: '/admin/archivio'
+      preLoaderRoute: typeof AdminArchivioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/calendario': {
@@ -377,6 +397,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminArchivioRoute: AdminArchivioRoute,
   AdminCalendarioRoute: AdminCalendarioRoute,
   AdminNotificheRoute: AdminNotificheRoute,
   AdminReportRoute: AdminReportRoute,

@@ -123,6 +123,7 @@ export interface MalEvent {
   compenso: string;
   compenso_visibile: boolean;
   note_admin: string;
+  note_finali: string;
   stato: EventStatus;
   motivo_annullamento: string;
   conteggi?: { invitati: number; in_attesa: number; disponibili: number; confermati: number; righe_bolla: number; danni: number };
@@ -262,4 +263,35 @@ export function useApiMutation<V>(area: Area, build: (vars: V) => { path: string
     },
     onError: (err) => toast.error(err.message),
   });
+}
+
+export interface Resoconto {
+  event: MalEvent;
+  summary: {
+    persone: { invitati: number; confermati: number; disponibili_non_confermati: number; non_disponibili: number; senza_risposta: number; non_selezionati: number };
+    bolla: { oggetti: number; presenti: number; rientrati: number; danneggiati: number; mai_segnati_presenti: number; non_rientrati: number };
+  };
+  people: Array<{ stato: ParticipantStatus; ruolo_evento: string | null; nota_user: string | null; nome: string; cognome: string }>;
+  problemi: LoadRow[];
+  testo: string;
+  archivia_il: string;
+}
+export interface ArchiveItem {
+  id: number;
+  code: string;
+  nome: string;
+  data: string;
+  archived_at: string;
+}
+export const useResoconto = (code: string) => useApiQuery<Resoconto>("admin", ["events", code, "resoconto"], `/admin/events/${encodeURIComponent(code)}/resoconto`);
+export const useArchive = () => useApiQuery<{ archives: ArchiveItem[] }>("admin", ["archive"], "/admin/archive");
+
+/** Scarica un testo come file .txt sul dispositivo. */
+export function downloadText(filename: string, text: string) {
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }

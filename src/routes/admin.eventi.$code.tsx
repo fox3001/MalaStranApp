@@ -5,13 +5,13 @@ import { AppShell } from "@/components/AppShell";
 import { BollaImport, type ImportRow } from "@/components/BollaImport";
 import { EventForm } from "@/components/EventForm";
 import { Button, Card, ErrorBox, Field, Loading, ParticipantTag, SectionTitle, StatusTag } from "@/components/ui-kit";
-import { useAdminEvent, useAdminUsers, useApiMutation, type LoadRow, type MalEvent, type Participant, type ParticipantStatus } from "@/lib/api";
-import { formatDateLong, timeRange } from "@/lib/format";
+import { downloadText, useAdminEvent, useAdminUsers, useApiMutation, useResoconto, type LoadRow, type MalEvent, type Participant, type ParticipantStatus } from "@/lib/api";
+import { PARTICIPANT_LABEL, formatDate, formatDateLong, timeRange } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/eventi/$code")({ component: EventoAdmin });
 
-type Tab = "info" | "persone" | "bolla";
+type Tab = "info" | "persone" | "bolla" | "resoconto";
 
 function EventoAdmin() {
   const { code } = Route.useParams();
@@ -40,15 +40,16 @@ function EventoAdmin() {
             </div>
           </section>
 
-          <div className="mt-5 grid grid-cols-3 gap-1 rounded-lg border border-border bg-surface p-1">
+          <div className="mt-5 grid grid-cols-4 gap-1 rounded-lg border border-border bg-surface p-1">
             {(
               [
-                ["persone", `Persone (${q.data.participants.length})`],
-                ["bolla", `Bolla (${q.data.load_rows.length})`],
+                ["persone", `Persone ${q.data.participants.length}`],
+                ["bolla", `Bolla ${q.data.load_rows.length}`],
+                ["resoconto", "Resoconto"],
                 ["info", "Dettagli"],
               ] as Array<[Tab, string]>
             ).map(([k, label]) => (
-              <button key={k} type="button" onClick={() => setTab(k)} className={cn("min-h-10 rounded-md text-xs font-semibold uppercase tracking-[0.06em]", tab === k ? "bg-accent text-accent-foreground" : "text-muted-foreground")}>
+              <button key={k} type="button" onClick={() => setTab(k)} className={cn("min-h-10 rounded-md text-[11px] font-semibold uppercase tracking-[0.04em]", tab === k ? "bg-accent text-accent-foreground" : "text-muted-foreground")}>
                 {label}
               </button>
             ))}
@@ -57,6 +58,7 @@ function EventoAdmin() {
           <div className="mt-5">
             {tab === "info" && <InfoTab event={q.data.event} />}
             {tab === "persone" && <PeopleTab code={code} participants={q.data.participants} />}
+            {tab === "resoconto" && <ResocontoTab code={code} />}
             {tab === "bolla" && <BollaTab code={code} rows={q.data.load_rows} participants={q.data.participants} />}
           </div>
         </>
@@ -448,5 +450,112 @@ function Flag({ label, on, onClick, danger }: { label: string; on: boolean; onCl
       </span>
       {label}
     </button>
+  );
+}
+
+/* ----------------------------- Resoconto ---------------------------- */
+
+function ResocontoTab({ code }: { code: string }) {
+  const router = useRouter();
+  const q = useResoconto(code);
+  const [note, setNote] = useState<string | null>(null);
+  const saveNote = useApiMutation<string>("admin", (note_finali) => ({ path: `/admin/events/${code}`, method: "PATCH", body: { note_finali, notify: false } }), {
+    success: "Note salvate",
+    invalidate: [["events"]],
+  });
+  const archive = useApiMutation<void>("admin", () => ({ path: `/admin/events/${code}/archivia`, method: "POST" }), { success: "Evento archiviato", invalidate: [["events"], ["archive"]] });
+
+  if (q.isLoading) return <Loading />;
+  if (q.isError || !q.data) return <ErrorBox error={q.error} onRetry={() => void q.refetch()} />;
+  const { summary: s, people, problemi, event } = q.data;
+  const noteValue = note ?? event.note_finali;
+
+  return (
+    <div className="grid gap-5">
+      <Card>
+        <SectionTitle>Com'è andata</SectionTitle>
+        <textarea
+          value={noteValue}
+          onChange={(e) => setNote(e.target.value)}
+          rows={4}
+          placeholder="Le tue note finali: pubblico, cliente, cosa migliorare la prossima volta…"
+          className="w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
+        />
+        <Button type="button" variant="outline" full className="mt-2" disabled={saveNote.isPending || noteValue === event.note_finali} onClick={() => saveNote.mutate(noteValue)}>
+          Salva note
+        </Button>
+      </Card>
+
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <Counter label="Confermati" value={`${s.persone.confermati}/${s.persone.invitati}`} />
+        <Counter label="Rientrati" value={`${s.bolla.rientrati}/${s.bolla.oggetti}`} warn={s.bolla.non_rientrati > 0} />
+        <Counter label="Danni" value={String(s.bolla.danneggiati)} warn={s.bolla.danneggiati > 0} />
+      </div>
+
+      <Card>
+        <SectionTitle>Da sistemare</SectionTitle>
+        {problemi.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nessun danno, commento o oggetto mancante.</p>
+        ) : (
+          <ul>
+            {problemi.map((r) => (
+              <li key={r.id} className="border-b border-border py-2.5 text-sm last:border-b-0">
+                <span className="font-medium">{r.item}</span> <span className="text-muted-foreground">· {r.assigned_name || "non assegnato"}</span>
+                <span className="mt-0.5 block text-xs">
+                  {r.damaged && <span className="mr-2 font-semibold text-destructive">Danneggiato</span>}
+                  {r.present && !r.returned && <span className="mr-2 font-semibold text-warning-foreground">Non rientrato</span>}
+                  {r.comment && <span className="text-foreground">“{r.comment}”</span>}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {s.bolla.mai_segnati_presenti > 0 && <p className="mt-2 text-xs text-muted-foreground">{s.bolla.mai_segnati_presenti} oggetti non sono mai stati segnati come presenti.</p>}
+      </Card>
+
+      <Card>
+        <SectionTitle>Persone</SectionTitle>
+        {people.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nessuno invitato.</p>
+        ) : (
+          <ul>
+            {people.map((p, i) => (
+              <li key={i} className="border-b border-border py-2 text-sm last:border-b-0">
+                {p.nome} {p.cognome} <span className="text-muted-foreground">· {PARTICIPANT_LABEL[p.stato]}</span>
+                {p.ruolo_evento && <span className="text-muted-foreground"> · {p.ruolo_evento}</span>}
+                {p.nota_user && <span className="block text-xs text-muted-foreground">“{p.nota_user}”</span>}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      <Button type="button" onClick={() => downloadText(`${event.code}-resoconto.txt`, q.data!.testo)}>
+        Scarica resoconto (.txt)
+      </Button>
+
+      <Card className="bg-muted/40">
+        <p className="text-sm text-foreground">
+          Il <strong>{formatDate(q.data.archivia_il)}</strong> (un mese dopo l'evento) questo evento verrà tolto dall'app in automatico e il resoconto finirà nell'
+          <Link to="/admin/archivio" className="font-semibold text-accent underline">
+            Archivio
+          </Link>
+          .
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          full
+          className="mt-3"
+          disabled={archive.isPending}
+          onClick={() => {
+            if (window.confirm("Archiviare adesso? L'evento sparisce dall'app (anche per gli user) e resta solo il resoconto in Archivio."))
+              archive.mutate(undefined, { onSuccess: () => void router.navigate({ to: "/admin/archivio" }) });
+          }}
+        >
+          Archivia adesso
+        </Button>
+      </Card>
+    </div>
   );
 }

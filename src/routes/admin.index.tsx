@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AlertTriangle, BellRing, CalendarDays, CheckCircle2, ClipboardList, Plus, Users, type LucideIcon } from "lucide-react";
+import { AlertTriangle, Archive, BellRing, CalendarDays, CheckCircle2, ClipboardList, Plus, Users, type LucideIcon } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Card, Empty, ErrorBox, EventRow, Loading, PageTitle, SectionTitle } from "@/components/ui-kit";
 import { useAdminEvents, useAdminUsers, useNotifications } from "@/lib/api";
@@ -68,12 +68,15 @@ function AdminHome() {
             <Stat icon={Users} value={userCount} label="User attivi" to="/admin/collaboratori" />
           </section>
 
-          <section className="mt-4 grid grid-cols-2 gap-3">
+          <section className="mt-4 grid grid-cols-3 gap-3">
             <Link to="/admin/eventi/nuovo" className="flex min-h-12 items-center justify-center gap-2 rounded-lg border border-accent bg-accent px-3 text-xs font-semibold uppercase tracking-[0.08em] text-accent-foreground">
-              <Plus className="h-4 w-4" /> Nuovo evento
+              <Plus className="h-4 w-4" /> Evento
             </Link>
             <Link to="/admin/report" className="flex min-h-12 items-center justify-center gap-2 rounded-lg border border-primary/40 bg-surface px-3 text-xs font-semibold uppercase tracking-[0.08em] text-primary">
-              <ClipboardList className="h-4 w-4" /> Report bolle
+              <ClipboardList className="h-4 w-4" /> Report
+            </Link>
+            <Link to="/admin/archivio" className="flex min-h-12 items-center justify-center gap-2 rounded-lg border border-primary/40 bg-surface px-3 text-xs font-semibold uppercase tracking-[0.08em] text-primary">
+              <Archive className="h-4 w-4" /> Archivio
             </Link>
           </section>
 

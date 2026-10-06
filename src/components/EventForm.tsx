@@ -7,7 +7,7 @@ export type EventInput = Omit<MalEvent, "id" | "code" | "conteggi">;
 
 export const EMPTY_EVENT: EventInput = {
   nome: "", data: "", ora_ritrovo: "", ora_inizio: "", ora_fine: "", luogo: "", tipo: "", descrizione: "", info_operative: "",
-  referente_nome: "", referente_telefono: "", compenso: "", compenso_visibile: false, note_admin: "", stato: "richiesta", motivo_annullamento: "",
+  referente_nome: "", referente_telefono: "", compenso: "", compenso_visibile: false, note_admin: "", note_finali: "", stato: "richiesta", motivo_annullamento: "",
 };
 
 /** Modulo dati evento, usato sia per creare sia per modificare. */
