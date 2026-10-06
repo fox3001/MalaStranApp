@@ -86,7 +86,7 @@ export function BollaImport({ participants, onImport, busy }: { participants: Pa
         <FileSpreadsheet className="h-4 w-4 text-accent" /> Importa da Excel o CSV
       </p>
       <p className="mt-1 text-xs text-muted-foreground">
-        Colonne riconosciute: Sezione, Gruppo, Nome (o Oggetto), Quantità, Note, Codice, Taglia, Assegnato (username oppure «Nome Cognome» di uno user invitato).
+        Colonne riconosciute: Sezione, Gruppo, Nome (o Oggetto), Quantità, Note (username oppure «Nome Cognome» di uno user invitato).
       </p>
       <input
         type="file"
@@ -110,7 +110,6 @@ export function BollaImport({ participants, onImport, busy }: { participants: Pa
                   <th className="p-2">Oggetto</th>
                   <th className="p-2">Cat.</th>
                   <th className="p-2">Qtà</th>
-                  <th className="p-2">Assegnato</th>
                 </tr>
               </thead>
               <tbody>
@@ -121,11 +120,11 @@ export function BollaImport({ participants, onImport, busy }: { participants: Pa
                       {r.codice && <span className="text-muted-foreground"> · {r.codice}</span>}
                       {r.taglia && <span className="text-muted-foreground"> · tg {r.taglia}</span>}
                     </td>
-                    <td className="p-2">{r.categoria}</td>
-                    <td className="p-2">{r.quantita}</td>
                     <td className="p-2">
-                      {r.assegnato_testo ? (r.assigned_user_id ? r.assegnato_testo : <span className="text-destructive">{r.assegnato_testo} (non trovato)</span>) : "—"}
+                      {r.categoria}
+                      {r.note && <span className="block text-muted-foreground">{r.note}</span>}
                     </td>
+                    <td className="p-2">{r.quantita}</td>
                   </tr>
                 ))}
               </tbody>

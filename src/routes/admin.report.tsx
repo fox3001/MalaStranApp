@@ -52,7 +52,7 @@ function Report() {
                 <p className="mt-1 text-sm font-medium text-foreground">
                   {r.quantita > 1 && `${r.quantita}× `}
                   {r.item}
-                  <span className="font-normal text-muted-foreground"> · {r.assigned_name || "non assegnato"}</span>
+                  {r.note && <span className="font-normal text-muted-foreground"> · {r.note}</span>}
                 </p>
                 <p className="mt-1 text-xs">
                   <Mark on={r.prep}>Prep</Mark> · <Mark on={r.present}>Entrata</Mark> · <Mark on={r.returned}>Uscita</Mark> ·{" "}
@@ -73,10 +73,10 @@ function Mark({ on, children }: { on: boolean; children: string }) {
 }
 
 function downloadCsv(rows: ReportRow[]) {
-  const head = ["Data", "Evento", "Codice evento", "Sezione/gruppo", "Nome", "Quantità", "Note", "Assegnato a", "Prep", "Entrata", "Uscita", "Danni", "Commento"];
+  const head = ["Data", "Evento", "Codice evento", "Sezione/gruppo", "Nome", "Quantità", "Note", "Prep", "Entrata", "Uscita", "Danni", "Commento"];
   const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const lines = rows.map((r) =>
-    [r.event_data, r.event_nome, r.event_code, r.categoria, r.item, r.quantita, r.note, r.assigned_name, r.prep ? "sì" : "no", r.present ? "sì" : "no", r.returned ? "sì" : "no", r.damaged ? "sì" : "no", r.comment].map(esc).join(";"),
+    [r.event_data, r.event_nome, r.event_code, r.categoria, r.item, r.quantita, r.note, r.prep ? "sì" : "no", r.present ? "sì" : "no", r.returned ? "sì" : "no", r.damaged ? "sì" : "no", r.comment].map(esc).join(";"),
   );
   const blob = new Blob(["﻿" + [head.map(esc).join(";"), ...lines].join("\n")], { type: "text/csv;charset=utf-8" });
   const a = document.createElement("a");

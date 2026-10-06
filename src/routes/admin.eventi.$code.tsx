@@ -141,12 +141,13 @@ function PeopleTab({ code, participants }: { code: string; participants: Partici
   const users = useAdminUsers();
   const [picking, setPicking] = useState(false);
   const [selected, setSelected] = useState<number[]>([]);
+  const [tlIds, setTlIds] = useState<number[]>([]);
   const [search, setSearch] = useState("");
-  const invite = useApiMutation<number[]>("admin", (ids) => ({ path: `/admin/events/${code}/participants`, method: "POST", body: { user_ids: ids } }), {
+  const invite = useApiMutation<number[]>("admin", (ids) => ({ path: `/admin/events/${code}/participants`, method: "POST", body: { user_ids: ids, tl_ids: tlIds.filter((t) => ids.includes(t)) } }), {
     success: "Richiesta di disponibilità inviata",
     invalidate: [["events"], ["users"]],
   });
-  const decide = useApiMutation<{ userId: number; stato?: ParticipantStatus; ruolo_evento?: string }>(
+  const decide = useApiMutation<{ userId: number; stato?: ParticipantStatus; ruolo_evento?: string; is_tl?: boolean }>(
     "admin",
     ({ userId, ...body }) => ({ path: `/admin/events/${code}/participants/${userId}`, method: "PATCH", body }),
     { invalidate: [["events"], ["users"]] },
@@ -189,7 +190,10 @@ function PeopleTab({ code, participants }: { code: string; participants: Partici
                   </span>
                   <span className="block truncate text-xs text-muted-foreground">{p.ruolo_evento || p.qualifica || `@${p.username}`}</span>
                 </Link>
-                <ParticipantTag status={p.stato} />
+                <span className="flex flex-col items-end gap-1">
+                  <ParticipantTag status={p.stato} />
+                  {p.is_tl ? <span className="rounded-full bg-primary px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-white">Team leader</span> : null}
+                </span>
               </div>
               {p.nota_user && (
                 <p className="mt-2 flex items-start gap-1.5 rounded-md bg-muted px-2 py-1.5 text-xs text-foreground">
@@ -210,6 +214,7 @@ function PeopleTab({ code, participants }: { code: string; participants: Partici
                 {(p.stato === "confirmed" || p.stato === "rejected") && (
                   <SmallBtn onClick={() => decide.mutate({ userId: p.user_id, stato: "pending" })}>Riapri risposta</SmallBtn>
                 )}
+                <SmallBtn onClick={() => decide.mutate({ userId: p.user_id, is_tl: !p.is_tl })}>{p.is_tl ? "Togli team leader" : "Rendi team leader"}</SmallBtn>
                 <SmallBtn
                   onClick={() => {
                     const r = window.prompt("Ruolo in questo evento (es. Capitano, Strega, Accoglienza):", p.ruolo_evento ?? "");
@@ -245,8 +250,8 @@ function PeopleTab({ code, participants }: { code: string; participants: Partici
           ) : (
             <ul className="max-h-72 overflow-auto">
               {candidates.map((u) => (
-                <li key={u.id}>
-                  <label className="flex min-h-11 items-center gap-3 border-b border-border py-2 text-sm last:border-b-0">
+                <li key={u.id} className="flex items-center justify-between gap-2 border-b border-border py-2 last:border-b-0">
+                  <label className="flex min-h-11 min-w-0 flex-1 items-center gap-3 text-sm">
                     <input type="checkbox" className="h-5 w-5" checked={selected.includes(u.id)} onChange={(e) => setSelected((s) => (e.target.checked ? [...s, u.id] : s.filter((x) => x !== u.id)))} />
                     <span className="min-w-0">
                       <span className="block">
@@ -255,6 +260,12 @@ function PeopleTab({ code, participants }: { code: string; participants: Partici
                       {u.competenze.length > 0 && <span className="block truncate text-xs text-muted-foreground">{u.competenze.join(", ")}</span>}
                     </span>
                   </label>
+                  {selected.includes(u.id) && (
+                    <label className="flex shrink-0 items-center gap-1.5 rounded-full border border-primary/40 px-2.5 py-1 text-[11px] font-semibold text-primary">
+                      <input type="checkbox" checked={tlIds.includes(u.id)} onChange={(e) => setTlIds((s) => (e.target.checked ? [...s, u.id] : s.filter((x) => x !== u.id)))} />
+                      Team leader
+                    </label>
+                  )}
                 </li>
               ))}
             </ul>
@@ -268,6 +279,7 @@ function PeopleTab({ code, participants }: { code: string; participants: Partici
                 invite.mutate(selected, {
                   onSuccess: () => {
                     setSelected([]);
+                    setTlIds([]);
                     setPicking(false);
                   },
                 })
@@ -328,14 +340,12 @@ function BollaTab({ code, rows, participants }: { code: string; rows: LoadRow[];
     e.preventDefault();
     const form = e.currentTarget;
     const f = new FormData(form);
-    const assigned = Number(f.get("assigned"));
     add.mutate(
       {
         item: String(f.get("item") || ""),
         categoria: String(f.get("categoria") || ""),
         note: String(f.get("note") || ""),
         quantita: Number(f.get("quantita") || 1),
-        assigned_user_id: assigned > 0 ? assigned : null,
       },
       { onSuccess: () => form.reset() },
     );
@@ -355,7 +365,7 @@ function BollaTab({ code, rows, participants }: { code: string; rows: LoadRow[];
         </div>
       )}
       <p className="-mt-2 text-xs text-muted-foreground">
-        <strong>Prep</strong> = preparato in magazzino (lo spunti tu). <strong>Entrata</strong> e <strong>Uscita</strong> = le spunte dell'animatore all'inizio e alla fine dell'evento.
+        <strong>Prep</strong> = preparato in magazzino (lo spunti tu). <strong>Entrata</strong> e <strong>Uscita</strong> = le spunte del team leader all'inizio e alla fine dell'evento.
       </p>
 
       {groups.length > 1 && (
@@ -376,8 +386,6 @@ function BollaTab({ code, rows, participants }: { code: string; rows: LoadRow[];
       ) : (
         groups.map(([cat, list]) => {
           const isOpen = open[cat] ?? true;
-          const owners = [...new Set(list.map((r) => r.assigned_user_id ?? 0))];
-          const groupOwner = owners.length === 1 ? owners[0]! : -1;
           const done = list.filter((r) => r.returned).length;
           const warn = list.some((r) => r.damaged || r.comment);
           return (
@@ -392,25 +400,6 @@ function BollaTab({ code, rows, participants }: { code: string; rows: LoadRow[];
                 </span>
                 <span className="shrink-0 text-xs font-semibold text-accent">{isOpen ? "Chiudi ▲" : "Apri ▼"}</span>
               </button>
-              <div className="flex items-center gap-2 border-b border-border px-4 py-2">
-                <span className="eyebrow shrink-0 text-muted-foreground">Gruppo a</span>
-                <select
-                  value={groupOwner}
-                  onChange={(e) => {
-                    const v = Number(e.target.value);
-                    if (v >= 0) assignGroup.mutate({ categoria: cat === "Senza gruppo" ? "" : cat, assigned_user_id: v || null });
-                  }}
-                  className="min-h-9 flex-1 rounded-md border border-border bg-surface px-2 text-xs"
-                >
-                  {groupOwner === -1 && <option value={-1}>Misto (persone diverse)</option>}
-                  <option value={0}>Non assegnato</option>
-                  {assignable.map((p) => (
-                    <option key={p.user_id} value={p.user_id}>
-                      {p.nome} {p.cognome}
-                    </option>
-                  ))}
-                </select>
-              </div>
               {isOpen && (
                 <ul>
                   {list.map((r) => (
@@ -422,7 +411,6 @@ function BollaTab({ code, rows, participants }: { code: string; rows: LoadRow[];
                             {r.item}
                           </span>
                           {r.note && <span className="block text-xs text-muted-foreground">{r.note}</span>}
-                          {groupOwner === -1 && <span className="block text-xs text-accent">{r.assigned_name || "non assegnato"}</span>}
                         </span>
                         <button type="button" aria-label="Elimina riga" onClick={() => window.confirm(`Togliere "${r.item}" dalla bolla?`) && del.mutate(r.id)} className="rounded p-1.5 text-muted-foreground">
                           <Trash2 className="h-4 w-4" />
@@ -459,17 +447,9 @@ function BollaTab({ code, rows, participants }: { code: string; rows: LoadRow[];
             ))}
           </datalist>
           <input name="note" placeholder="Note / destinazione (es. stanza figlio, nel kit)" className={input} />
-          <div className="grid grid-cols-[6rem_1fr] gap-2">
-            <input name="quantita" type="number" min={1} defaultValue={1} className={input} />
-            <select name="assigned" defaultValue={0} className={input}>
-              <option value={0}>Non assegnato</option>
-              {assignable.map((p) => (
-                <option key={p.user_id} value={p.user_id}>
-                  {p.nome} {p.cognome}
-                </option>
-              ))}
-            </select>
-          </div>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            Quantità <input name="quantita" type="number" min={1} defaultValue={1} className={cn(input, "w-24")} />
+          </label>
           <Button type="submit" disabled={add.isPending}>
             Aggiungi alla bolla
           </Button>
@@ -570,7 +550,7 @@ function ResocontoTab({ code }: { code: string }) {
           <ul>
             {problemi.map((r) => (
               <li key={r.id} className="border-b border-border py-2.5 text-sm last:border-b-0">
-                <span className="font-medium">{r.item}</span> <span className="text-muted-foreground">· {r.assigned_name || "non assegnato"}</span>
+                <span className="font-medium">{r.item}</span> {r.note && <span className="text-muted-foreground">· {r.note}</span>}
                 <span className="mt-0.5 block text-xs">
                   {r.damaged && <span className="mr-2 font-semibold text-destructive">Danneggiato</span>}
                   {r.present && !r.returned && <span className="mr-2 font-semibold text-warning-foreground">Entrata senza uscita</span>}

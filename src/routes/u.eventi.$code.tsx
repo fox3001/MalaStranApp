@@ -116,23 +116,22 @@ function EventoUser() {
                     </Card>
                   )}
 
-                  <Card className="mt-5">
-                    <SectionTitle>La mia bolla di carico</SectionTitle>
-                    {load_rows.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">Nessun oggetto assegnato a te per questo evento.</p>
-                    ) : (
-                      <>
-                        <p className="text-sm text-foreground">
-                          {load_rows.length} voci · entrata {load_rows.filter((r) => r.present).length} · uscita {load_rows.filter((r) => r.returned).length}
-                        </p>
-                        <Link to="/u/bolla/$code" params={{ code: e.code }} className="mt-3 flex min-h-12 items-center justify-center gap-2 rounded-lg bg-accent text-sm font-semibold uppercase tracking-[0.08em] text-accent-foreground">
-                          <ClipboardCheck className="h-4 w-4" /> Apri e compila la bolla
-                        </Link>
-                      </>
-                    )}
-                  </Card>
                 </>
               )}
+
+              {p.is_tl && (
+                <Card className="mt-5 border-accent/50">
+                  <p className="eyebrow text-accent">Sei team leader</p>
+                  <p className="mt-1 text-sm text-foreground">Tocca a te compilare la bolla di carico di tutto l'evento: entrata, uscita ed eventuali danni.</p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {load_rows.length} voci · entrata {load_rows.filter((r) => r.present).length} · uscita {load_rows.filter((r) => r.returned).length}
+                  </p>
+                  <Link to="/u/bolla/$code" params={{ code: e.code }} className="mt-3 flex min-h-12 items-center justify-center gap-2 rounded-lg bg-accent text-sm font-semibold uppercase tracking-[0.08em] text-accent-foreground">
+                    <ClipboardCheck className="h-4 w-4" /> Apri e compila la bolla
+                  </Link>
+                </Card>
+              )}
+
             </>
           );
         })()

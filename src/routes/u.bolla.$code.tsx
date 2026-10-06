@@ -34,10 +34,10 @@ function BollaUser() {
             </p>
           )}
           <section className="mt-5 grid gap-6">
-            {q.data.partecipazione.stato !== "confirmed" ? (
-              <Empty>La bolla si compila dopo la conferma per l'evento.</Empty>
+            {!q.data.partecipazione.is_tl ? (
+              <Empty>La bolla di questo evento la compila il team leader.</Empty>
             ) : rows.length === 0 ? (
-              <Empty>Nessuna voce assegnata a te.</Empty>
+              <Empty>La bolla di questo evento è ancora vuota.</Empty>
             ) : (
               groupRows(rows).map(([cat, list]) => (
                 <div key={cat}>

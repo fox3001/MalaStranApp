@@ -140,6 +140,7 @@ export interface Participant {
   nota_user: string | null;
   nota_admin: string | null;
   responded_at: string | null;
+  is_tl: number;
 }
 
 export interface LoadRow {
@@ -182,6 +183,7 @@ export interface MyEvent {
   mio_stato?: ParticipantStatus;
   ruolo_evento?: string;
   mie_righe_bolla?: number;
+  is_tl?: boolean;
 }
 
 export interface Notification {
@@ -239,7 +241,7 @@ export const useMyEvents = () => useApiQuery<{ events: MyEvent[] }>("user", ["ev
 export const useMyEvent = (code: string) =>
   useApiQuery<{
     event: MyEvent;
-    partecipazione: { stato: ParticipantStatus; ruolo_evento: string; nota_user: string; nota_admin: string };
+    partecipazione: { stato: ParticipantStatus; ruolo_evento: string; nota_user: string; nota_admin: string; is_tl: boolean };
     team: Array<{ nome: string; cognome: string; ruolo_evento: string | null }>;
     load_rows: LoadRow[];
   }>("user", ["events", code], `/my/events/${encodeURIComponent(code)}`);
