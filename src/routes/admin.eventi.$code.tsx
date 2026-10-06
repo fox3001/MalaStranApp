@@ -38,6 +38,7 @@ function EventoAdmin() {
             <div className="mt-2">
               <StatusTag status={q.data.event.stato} />
             </div>
+            <CloseBox code={code} event={q.data.event} />
           </section>
 
           <div className="mt-5 grid grid-cols-4 gap-1 rounded-lg border border-border bg-surface p-1">
@@ -59,7 +60,7 @@ function EventoAdmin() {
             {tab === "info" && <InfoTab event={q.data.event} />}
             {tab === "persone" && <PeopleTab code={code} participants={q.data.participants} />}
             {tab === "resoconto" && <ResocontoTab code={code} />}
-            {tab === "bolla" && <BollaTab code={code} rows={q.data.load_rows} participants={q.data.participants} />}
+            {tab === "bolla" && <BollaTab code={code} rows={q.data.load_rows} participants={q.data.participants} closed={q.data.event.stato === "chiuso"} />}
           </div>
         </>
       )}
@@ -318,7 +319,7 @@ function SmallBtn({ children, onClick, tone }: { children: React.ReactNode; onCl
 
 /* ------------------------------- Bolla ------------------------------ */
 
-function BollaTab({ code, rows, participants }: { code: string; rows: LoadRow[]; participants: Participant[] }) {
+function BollaTab({ code, rows, participants, closed }: { code: string; rows: LoadRow[]; participants: Participant[]; closed: boolean }) {
   const [importKey, setImportKey] = useState(0);
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const add = useApiMutation<Record<string, unknown>>("admin", (body) => ({ path: `/admin/events/${code}/load-rows`, method: "POST", body }), {
@@ -369,7 +370,7 @@ function BollaTab({ code, rows, participants }: { code: string; rows: LoadRow[];
       </p>
 
       {groups.length > 1 && (
-        <div className="-mt-2 flex gap-2">
+        <div className="flex gap-2">
           <button type="button" onClick={() => setOpen(Object.fromEntries(groups.map(([g]) => [g, true])))} className="min-h-9 flex-1 rounded-lg border border-border-strong text-xs font-semibold text-muted-foreground">
             Apri tutti i gruppi
           </button>
@@ -412,21 +413,24 @@ function BollaTab({ code, rows, participants }: { code: string; rows: LoadRow[];
                           </span>
                           {r.note && <span className="block text-xs text-muted-foreground">{r.note}</span>}
                         </span>
-                        <button type="button" aria-label="Elimina riga" onClick={() => window.confirm(`Togliere "${r.item}" dalla bolla?`) && del.mutate(r.id)} className="rounded p-1.5 text-muted-foreground">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        {!closed && (
+                          <button type="button" aria-label="Elimina riga" onClick={() => window.confirm(`Togliere "${r.item}" dalla bolla?`) && del.mutate(r.id)} className="rounded p-1.5 text-muted-foreground">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                       <div className="mt-2 grid grid-cols-4 gap-1.5">
-                        <BigCheck label="Prep" on={r.prep} onClick={() => patch.mutate({ id: r.id, prep: !r.prep })} />
-                        <BigCheck label="Entrata" on={r.present} onClick={() => patch.mutate({ id: r.id, present: !r.present })} />
-                        <BigCheck label="Uscita" on={r.returned} onClick={() => patch.mutate({ id: r.id, returned: !r.returned })} />
-                        <BigCheck label="Danni" on={r.damaged} danger onClick={() => patch.mutate({ id: r.id, damaged: !r.damaged })} />
+                        <BigCheck label="Prep" disabled={closed} on={r.prep} onClick={() => patch.mutate({ id: r.id, prep: !r.prep })} />
+                        <BigCheck label="Entrata" disabled={closed} on={r.present} onClick={() => patch.mutate({ id: r.id, present: !r.present })} />
+                        <BigCheck label="Uscita" disabled={closed} on={r.returned} onClick={() => patch.mutate({ id: r.id, returned: !r.returned })} />
+                        <BigCheck label="Danni" disabled={closed} on={r.damaged} danger onClick={() => patch.mutate({ id: r.id, damaged: !r.damaged })} />
                       </div>
                       {r.comment && (
                         <p className="mt-2 flex items-start gap-1.5 rounded-md bg-muted px-2 py-1.5 text-xs">
                           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" /> {r.comment}
                         </p>
                       )}
+                      {closed ? <Annotation row={r} onSave={(annotazione) => patch.mutate({ id: r.id, annotazione })} /> : r.annotazione && <p className="mt-2 text-xs text-primary">Annotazione: {r.annotazione}</p>}
                     </li>
                   ))}
                 </ul>
@@ -436,6 +440,12 @@ function BollaTab({ code, rows, participants }: { code: string; rows: LoadRow[];
         })
       )}
 
+      {closed ? (
+        <Card className="bg-muted/40">
+          <p className="text-sm text-foreground">Evento chiuso: le spunte sono bloccate. Puoi solo scrivere un'annotazione sotto ogni voce: finirà nel resoconto .txt finale.</p>
+        </Card>
+      ) : (
+      <>
       <Card>
         <SectionTitle>Aggiungi voce</SectionTitle>
         <form onSubmit={submit} className="grid gap-2">
@@ -458,27 +468,73 @@ function BollaTab({ code, rows, participants }: { code: string; rows: LoadRow[];
 
       <BollaImport
         key={importKey}
-        participants={assignable}
         busy={add.isPending}
+        title={rows.length ? "Aggiungi voci da un file" : "Carica la bolla da file"}
         onImport={(list: ImportRow[]) => add.mutate({ rows: list }, { onSuccess: () => setImportKey((k) => k + 1) })}
       />
+      </>
+      )}
     </div>
   );
 }
 
-function BigCheck({ label, on, onClick, danger }: { label: string; on: boolean; onClick: () => void; danger?: boolean }) {
+function BigCheck({ label, on, onClick, danger, disabled }: { label: string; on: boolean; onClick: () => void; danger?: boolean; disabled?: boolean }) {
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={onClick}
       aria-pressed={on}
       className={cn(
-        "flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-lg border text-[11px] font-semibold",
+        "flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-lg border text-[11px] font-semibold disabled:cursor-not-allowed disabled:opacity-60",
         on ? (danger ? "border-destructive bg-destructive text-white" : "border-success bg-success text-white") : "border-border-strong bg-surface text-muted-foreground",
       )}
     >
       <span className={cn("flex h-4 w-4 items-center justify-center rounded border", on ? "border-white" : "border-border-strong")}>{on && <Check className="h-3 w-3" />}</span>
       {label}
+    </button>
+  );
+}
+
+function Annotation({ row, onSave }: { row: LoadRow; onSave: (v: string) => void }) {
+  const [v, setV] = useState(row.annotazione);
+  return (
+    <div className="mt-2 flex gap-2">
+      <input
+        value={v}
+        onChange={(e) => setV(e.target.value)}
+        placeholder="Annotazione admin (va nel .txt finale)"
+        className="min-h-10 flex-1 rounded-lg border border-primary/40 bg-surface px-3 text-xs outline-none focus:border-primary"
+      />
+      <button type="button" disabled={v === row.annotazione} onClick={() => onSave(v)} className="min-h-10 rounded-lg border border-primary px-3 text-xs font-semibold text-primary disabled:opacity-40">
+        Salva
+      </button>
+    </div>
+  );
+}
+
+function CloseBox({ code, event }: { code: string; event: MalEvent }) {
+  const close = useApiMutation<void>("admin", () => ({ path: `/admin/events/${code}/chiudi`, method: "POST" }), { success: "Evento chiuso", invalidate: [["events"]] });
+  const reopen = useApiMutation<void>("admin", () => ({ path: `/admin/events/${code}/riapri`, method: "POST" }), { success: "Evento riaperto", invalidate: [["events"]] });
+  if (event.stato === "annullato") return null;
+  if (event.stato === "chiuso")
+    return (
+      <div className="mt-3 rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm">
+        <p className="font-semibold text-primary">Evento chiuso{event.chiuso_da ? ` da ${event.chiuso_da}` : ""}</p>
+        <p className="mt-1 text-xs text-muted-foreground">Ora lo modifichi solo tu (dettagli e annotazioni sulla bolla) fino all'archiviazione.</p>
+        <button type="button" disabled={reopen.isPending} onClick={() => window.confirm("Riaprire l'evento? I team leader potranno di nuovo spuntare la bolla.") && reopen.mutate()} className="mt-2 text-xs font-semibold text-accent underline">
+          Riapri evento
+        </button>
+      </div>
+    );
+  return (
+    <button
+      type="button"
+      disabled={close.isPending}
+      onClick={() => window.confirm("Chiudere l'evento? Le spunte della bolla si bloccano per tutti; resterà modificabile solo da te.") && close.mutate()}
+      className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-primary bg-primary text-xs font-semibold uppercase tracking-[0.08em] text-white"
+    >
+      Evento chiuso
     </button>
   );
 }

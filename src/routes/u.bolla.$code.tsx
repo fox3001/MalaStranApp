@@ -28,6 +28,9 @@ function BollaUser() {
           <p className="mt-3 text-sm text-muted-foreground">
             <strong>Entrata</strong>: quando arrivi e hai l'oggetto. <strong>Uscita</strong>: a fine evento, quando lo rimetti a posto. Se è rovinato tocca <strong>Danni</strong> e scrivi cosa è successo.
           </p>
+          {q.data.event.stato === "chiuso" && (
+            <p className="mt-3 rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm text-primary">Evento chiuso: la bolla è in sola lettura.</p>
+          )}
           {rows.length > 0 && (
             <p className="mt-3 text-sm font-semibold text-foreground">
               Entrata {rows.filter((r) => r.present).length}/{rows.length} · Uscita {rows.filter((r) => r.returned).length}/{rows.length}
@@ -44,7 +47,7 @@ function BollaUser() {
                   <h3 className="eyebrow mb-2 border-b border-border pb-1 text-primary">{cat}</h3>
                   <div className="grid gap-3">
                     {list.map((r) => (
-                      <Row key={r.id} row={r} />
+                      <Row key={r.id} row={r} locked={q.data!.event.stato === "chiuso"} />
                     ))}
                   </div>
                 </div>
@@ -57,7 +60,7 @@ function BollaUser() {
   );
 }
 
-function Row({ row }: { row: LoadRow }) {
+function Row({ row, locked }: { row: LoadRow; locked: boolean }) {
   const [comment, setComment] = useState(row.comment);
   useEffect(() => setComment(row.comment), [row.comment]);
   const save = useApiMutation<Partial<Pick<LoadRow, "present" | "returned" | "damaged" | "comment">>>("user", (body) => ({ path: `/my/load-rows/${row.id}`, method: "PATCH", body }), {
@@ -72,20 +75,21 @@ function Row({ row }: { row: LoadRow }) {
       </p>
       {row.note && <p className="text-xs text-muted-foreground">{row.note}</p>}
       <div className="mt-3 grid grid-cols-3 gap-2">
-        <Check3 label="Entrata" on={row.present} disabled={save.isPending} onClick={() => save.mutate({ present: !row.present })} />
-        <Check3 label="Uscita" on={row.returned} disabled={save.isPending} onClick={() => save.mutate({ returned: !row.returned })} />
-        <Check3 label="Danni" danger on={row.damaged} disabled={save.isPending} onClick={() => save.mutate({ damaged: !row.damaged })} />
+        <Check3 label="Entrata" on={row.present} disabled={locked || save.isPending} onClick={() => save.mutate({ present: !row.present })} />
+        <Check3 label="Uscita" on={row.returned} disabled={locked || save.isPending} onClick={() => save.mutate({ returned: !row.returned })} />
+        <Check3 label="Danni" danger on={row.damaged} disabled={locked || save.isPending} onClick={() => save.mutate({ damaged: !row.damaged })} />
       </div>
       <div className="mt-3 flex gap-2">
         <input
           value={comment}
           onChange={(e) => setComment(e.target.value)}
+          disabled={locked}
           placeholder="Commento (es. manico scheggiato)"
           className="min-h-11 flex-1 rounded-lg border border-border-strong bg-surface px-3 text-sm outline-none focus:border-accent"
         />
         <button
           type="button"
-          disabled={save.isPending || comment === row.comment}
+          disabled={locked || save.isPending || comment === row.comment}
           onClick={() => save.mutate({ comment })}
           className="min-h-11 rounded-lg border border-accent px-3 text-sm font-semibold text-accent disabled:opacity-40"
         >

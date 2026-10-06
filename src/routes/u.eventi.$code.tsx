@@ -12,6 +12,7 @@ function EventoUser() {
   const { code } = Route.useParams();
   const q = useMyEvent(code);
   const [nota, setNota] = useState("");
+  const close = useApiMutation<void>("user", () => ({ path: `/my/events/${code}/chiudi`, method: "POST" }), { success: "Evento chiuso: l'ufficio è stato avvisato", invalidate: [["events"]] });
   const answer = useApiMutation<"available" | "unavailable">("user", (stato) => ({ path: `/my/events/${code}/availability`, method: "POST", body: { stato, nota } }), {
     success: "Risposta inviata all'ufficio",
     invalidate: [["events"]],
@@ -119,19 +120,36 @@ function EventoUser() {
                 </>
               )}
 
-              {p.is_tl && (
+              {p.is_tl && e.stato !== "annullato" && (
                 <Card className="mt-5 border-accent/50">
                   <p className="eyebrow text-accent">Sei team leader</p>
-                  <p className="mt-1 text-sm text-foreground">Tocca a te compilare la bolla di carico di tutto l'evento: entrata, uscita ed eventuali danni.</p>
+                  {e.stato === "chiuso" ? (
+                    <p className="mt-1 text-sm text-foreground">Evento chiuso: la bolla ora la può modificare solo l'ufficio.</p>
+                  ) : (
+                    <p className="mt-1 text-sm text-foreground">Tocca a te compilare la bolla di carico di tutto l'evento: entrata, uscita ed eventuali danni. A fine evento premi «Evento chiuso».</p>
+                  )}
                   <p className="mt-2 text-sm text-muted-foreground">
                     {load_rows.length} voci · entrata {load_rows.filter((r) => r.present).length} · uscita {load_rows.filter((r) => r.returned).length}
                   </p>
                   <Link to="/u/bolla/$code" params={{ code: e.code }} className="mt-3 flex min-h-12 items-center justify-center gap-2 rounded-lg bg-accent text-sm font-semibold uppercase tracking-[0.08em] text-accent-foreground">
-                    <ClipboardCheck className="h-4 w-4" /> Apri e compila la bolla
+                    <ClipboardCheck className="h-4 w-4" /> {e.stato === "chiuso" ? "Vedi la bolla" : "Apri e compila la bolla"}
                   </Link>
+                  {e.stato !== "chiuso" && (
+                    <button
+                      type="button"
+                      disabled={close.isPending}
+                      onClick={() => {
+                        const missing = load_rows.filter((r) => r.present && !r.returned).length;
+                        const msg = `Chiudere l'evento?${missing ? ` Attenzione: ${missing} voci risultano entrate ma non uscite.` : ""} Dopo non potrai più modificare la bolla.`;
+                        if (window.confirm(msg)) close.mutate();
+                      }}
+                      className="mt-3 flex min-h-12 w-full items-center justify-center rounded-lg border border-primary bg-primary text-sm font-semibold uppercase tracking-[0.08em] text-white"
+                    >
+                      Evento chiuso
+                    </button>
+                  )}
                 </Card>
               )}
-
             </>
           );
         })()

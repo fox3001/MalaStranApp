@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { Button, SectionTitle, SelectInput, TextArea, TextInput, Toggle, Card } from "@/components/ui-kit";
 import type { EventStatus, MalEvent } from "@/lib/api";
 import { EVENT_STATUS_LABEL } from "@/lib/format";
@@ -11,7 +11,7 @@ export const EMPTY_EVENT: EventInput = {
 };
 
 /** Modulo dati evento, usato sia per creare sia per modificare. */
-export function EventForm({ initial, submitLabel, busy, onSubmit }: { initial: EventInput; submitLabel: string; busy?: boolean; onSubmit: (v: EventInput) => void }) {
+export function EventForm({ initial, submitLabel, busy, onSubmit, extra }: { initial: EventInput; submitLabel: string; busy?: boolean; onSubmit: (v: EventInput) => void; extra?: ReactNode }) {
   const [v, setV] = useState<EventInput>(initial);
   const set = (k: keyof EventInput) => (e: { target: { value: string } }) => setV((s) => ({ ...s, [k]: e.target.value }));
 
@@ -60,6 +60,8 @@ export function EventForm({ initial, submitLabel, busy, onSubmit }: { initial: E
       <Card>
         <TextArea label="Note interne (solo admin)" value={v.note_admin} onChange={set("note_admin")} />
       </Card>
+
+      {extra}
 
       <Button type="submit" disabled={busy} full>
         {busy ? "Salvataggio…" : submitLabel}

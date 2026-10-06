@@ -124,6 +124,8 @@ export interface MalEvent {
   compenso_visibile: boolean;
   note_admin: string;
   note_finali: string;
+  chiuso_da?: string;
+  chiuso_at?: string;
   stato: EventStatus;
   motivo_annullamento: string;
   conteggi?: { invitati: number; in_attesa: number; disponibili: number; confermati: number; righe_bolla: number; danni: number };
@@ -157,6 +159,7 @@ export interface LoadRow {
   returned: boolean;
   damaged: boolean;
   prep: boolean;
+  annotazione: string;
   note: string;
   comment: string;
   updated_by: string;
