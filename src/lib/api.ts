@@ -262,11 +262,12 @@ export interface TavernaMessage {
   user_id: number | null;
   author_name: string;
   testo: string;
+  mentions?: Array<{ id: number | null; role: "admin" | "user"; name: string }>;
   created_at: string;
 }
 /** Taverna: si ricarica ogni 3 secondi, così i messaggi arrivano quasi in diretta. */
 export const useTaverna = (area: Area) =>
-  useQuery<{ messages: TavernaMessage[]; me_name?: string }, ApiError>({
+  useQuery<{ messages: TavernaMessage[]; me_name?: string; me_role?: Area; me_id?: number | null }, ApiError>({
     queryKey: [area, "taverna"],
     queryFn: () => api(area, "/taverna"),
     refetchInterval: 3000,
