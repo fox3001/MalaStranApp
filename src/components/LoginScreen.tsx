@@ -1,8 +1,7 @@
-import { Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { api, setToken, type Area } from "@/lib/api";
-import { ArcaneCircle, Button, TextInput, Toggle } from "@/components/ui-kit";
+import { ArcaneCircle, Button, LinkButton, TextInput, Toggle } from "@/components/ui-kit";
 
 /** Schermata di accesso: logo, nome utente, password, "Ricordami", ENTRA. */
 export function LoginScreen({ area, onDone }: { area: Area; onDone: () => void }) {
@@ -41,9 +40,11 @@ export function LoginScreen({ area, onDone }: { area: Area; onDone: () => void }
         <Button type="submit" variant="accent" full disabled={busy} className="mt-3">
           {busy ? "Accesso…" : "Entra"}
         </Button>
-        <Link to={area === "admin" ? "/" : "/admin"} className="mx-auto mt-5 block w-fit font-display text-[11px] uppercase tracking-[0.18em] text-accent underline underline-offset-4">
-          {area === "admin" ? "Accedi come user" : "Accedi come admin"}
-        </Link>
+        <div className="mt-3">
+          <LinkButton to={area === "admin" ? "/" : "/admin"} variant="primary" full>
+            {area === "admin" ? "Accedi come user" : "Accedi come admin"}
+          </LinkButton>
+        </div>
         {area === "user" && <p className="mt-4 text-center text-[15px] italic text-muted-foreground">Nome utente e password te li dà l'ufficio.</p>}
       </form>
     </main>
