@@ -6,7 +6,7 @@ import { EVENT_STATUS_LABEL } from "@/lib/format";
 export type EventInput = Omit<MalEvent, "id" | "code" | "conteggi">;
 
 export const EMPTY_EVENT: EventInput = {
-  nome: "", data: "", ora_ritrovo: "", ora_inizio: "", ora_fine: "", luogo: "", tipo: "", descrizione: "", info_operative: "",
+  nome: "", data: "", ora_ritrovo: "", ora_inizio: "", ora_fine: "", luogo: "", tipo: "", tematica: "", descrizione: "", info_operative: "",
   referente_nome: "", referente_telefono: "", compenso: "", compenso_visibile: false, note_admin: "", note_finali: "", stato: "richiesta", motivo_annullamento: "",
 };
 
@@ -34,6 +34,19 @@ export function EventForm({ initial, submitLabel, busy, onSubmit, extra }: { ini
           <TextInput label="Inizio" type="time" value={v.ora_inizio} onChange={set("ora_inizio")} />
           <TextInput label="Fine" type="time" value={v.ora_fine} onChange={set("ora_fine")} />
         </div>
+        <TextInput
+          label="Tematica"
+          value={v.tematica ?? ""}
+          onChange={set("tematica")}
+          list="tematiche"
+          placeholder="es. Medievale, Pirata, Magia…"
+          hint="Nel calendario gli user vedono solo questa (o il tipo, se manca)."
+        />
+        <datalist id="tematiche">
+          {["Medievale", "Pirata", "Magia", "Vittoriana", "Fantasy", "Horror", "Steampunk", "Anni '20"].map((x) => (
+            <option key={x} value={x} />
+          ))}
+        </datalist>
         <TextInput label="Luogo" value={v.luogo} onChange={set("luogo")} placeholder="Indirizzo o nome del posto" />
         <TextArea label="Descrizione (la vedono gli user invitati)" value={v.descrizione} onChange={set("descrizione")} />
         <SelectInput label="Stato evento" value={v.stato} onChange={(e) => setV((s) => ({ ...s, stato: e.target.value as EventStatus }))}>

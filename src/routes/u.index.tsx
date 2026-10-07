@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AppShell, BellButton } from "@/components/AppShell";
+import { AppShell, BellButton, useLogout } from "@/components/AppShell";
 import { Sigillo } from "@/components/Sigillo";
 import { ArcaneCircle, ErrorBox, Loading, ShieldDate, Tile, Wordmark } from "@/components/ui-kit";
 import { useMyEvents, useProfile } from "@/lib/api";
@@ -10,6 +10,7 @@ export const Route = createFileRoute("/u/")({ component: UserHome });
 function UserHome() {
   const profile = useProfile();
   const events = useMyEvents();
+  const logout = useLogout("user");
   const today = todayIso();
   const mine = (events.data?.events ?? []).filter((e) => e.data >= today && e.stato !== "annullato");
   const toAnswer = mine.filter((e) => e.mio_stato === "pending");
@@ -23,11 +24,16 @@ function UserHome() {
       area="user"
       title="Home"
       plainHeader
-      backdrop={<ArcaneCircle className="left-1/2 top-[150px] h-[540px] w-[540px] -translate-x-1/2" />}
+      backdrop={<ArcaneCircle spin className="left-1/2 top-[150px] h-[540px] w-[540px] -translate-x-1/2" />}
     >
       <header className="relative flex items-center justify-between pb-2.5 pt-6">
         <Wordmark small />
-        <BellButton area="user" />
+        <span className="flex items-center gap-2">
+          <button type="button" onClick={() => void logout()} className="min-h-11 border border-gold px-3 font-display text-[10px] uppercase tracking-[0.16em] text-primary">
+            Esci
+          </button>
+          <BellButton area="user" />
+        </span>
       </header>
 
       {profile.isLoading ? (

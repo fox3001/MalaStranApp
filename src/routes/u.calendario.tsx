@@ -1,40 +1,47 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { MonthCalendar } from "@/components/MonthCalendar";
-import { ErrorBox, Loading, PageTitle, ParticipantTag, StatusTag } from "@/components/ui-kit";
+import { ErrorBox, Loading, ShieldDate } from "@/components/ui-kit";
 import { useMyEvents } from "@/lib/api";
-import { formatDate, timeRange } from "@/lib/format";
+import { formatDateLong } from "@/lib/format";
 
 export const Route = createFileRoute("/u/calendario")({ component: CalendarioUser });
 
+/** Calendario degli user: si vedono solo le date e la tipologia/tematica, senza aprire l'evento. */
 function CalendarioUser() {
   const q = useMyEvents();
   return (
-    <AppShell area="user" title="Calendario">
-      <PageTitle eyebrow="Agenda" title="Il mio calendario" subtitle="Verde: confermato · Petrolio: da rispondere o in attesa." />
-      <div className="mt-5">
+    <AppShell area="user" eyebrow="Le tue date" title="Calendario">
+      <div className="mt-4">
         {q.isLoading ? (
           <Loading />
         ) : q.isError ? (
           <ErrorBox error={q.error} onRetry={() => void q.refetch()} />
         ) : (
           <MonthCalendar
+            legend={[
+              { tone: "primary", label: "da rispondere" },
+              { tone: "accent", label: "confermato" },
+            ]}
             items={(q.data?.events ?? [])
-              .filter((e) => e.mio_stato !== "rejected" && e.mio_stato !== "unavailable")
-              .map((e) => ({
-                key: e.code,
-                date: e.data,
-                tone: e.stato === "annullato" ? "muted" : e.mio_stato === "confirmed" ? "success" : "accent",
-                render: (
-                  <Link to="/u/eventi/$code" params={{ code: e.code }} className="block border-b border-border bg-card px-4 py-3 last:border-b-0 active:bg-muted">
-                    <span className="block font-serif text-base text-foreground">{e.nome}</span>
-                    <span className="block text-xs text-muted-foreground">
-                      {formatDate(e.data)} · {timeRange(e.ora_inizio, e.ora_fine)} · {e.luogo || "luogo da definire"}
-                    </span>
-                    <span className="mt-1.5 block">{e.stato === "annullato" ? <StatusTag status="annullato" /> : e.mio_stato && <ParticipantTag status={e.mio_stato} />}</span>
-                  </Link>
-                ),
-              }))}
+              .filter((e) => e.mio_stato !== "rejected" && e.mio_stato !== "unavailable" && e.stato !== "annullato")
+              .map((e) => {
+                const tone = e.mio_stato === "confirmed" ? "accent" : "primary";
+                return {
+                  key: e.code,
+                  date: e.data,
+                  tone,
+                  render: (
+                    <div className="mb-2.5 flex items-center gap-3.5 border border-border bg-card px-3 py-2.5">
+                      <ShieldDate date={e.data} tone={tone} />
+                      <span className="min-w-0">
+                        <span className="block text-[19px] font-semibold leading-tight">{e.tematica || e.tipo || "Evento"}</span>
+                        <span className="block text-[15px] capitalize text-muted-foreground">{formatDateLong(e.data)}</span>
+                      </span>
+                    </div>
+                  ),
+                };
+              })}
           />
         )}
       </div>

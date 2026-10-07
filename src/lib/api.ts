@@ -121,6 +121,7 @@ export interface MalEvent {
   ora_fine: string;
   luogo: string;
   tipo: string;
+  tematica?: string;
   descrizione: string;
   info_operative: string;
   referente_nome: string;
@@ -181,6 +182,7 @@ export interface MyEvent {
   ora_fine: string;
   luogo: string;
   tipo: string;
+  tematica?: string;
   descrizione: string;
   stato: EventStatus;
   motivo_annullamento: string;

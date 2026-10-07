@@ -1,17 +1,19 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { MONTHS, todayIso } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
+type Tone = "accent" | "primary" | "muted" | "success";
 export interface CalendarItem {
   key: string;
   date: string;
-  tone: "accent" | "primary" | "muted" | "success";
+  tone: Tone;
   render: ReactNode;
 }
 
-/** Calendario mensile: puntini sui giorni con eventi, elenco del mese sotto. */
-export function MonthCalendar({ items }: { items: CalendarItem[] }) {
+const BG: Record<Tone, string> = { primary: "bg-primary", accent: "bg-accent", success: "bg-accent", muted: "bg-[#8C7F72]" };
+
+/** Calendario mensile: i giorni con eventi diventano piccoli scudi colorati, l'elenco del mese è sotto. */
+export function MonthCalendar({ items, legend }: { items: CalendarItem[]; legend?: { tone: Tone; label: string }[] }) {
   const today = todayIso();
   const [cursor, setCursor] = useState(() => ({ y: Number(today.slice(0, 4)), m: Number(today.slice(5, 7)) - 1 }));
   const [selected, setSelected] = useState<string | null>(null);
@@ -38,59 +40,68 @@ export function MonthCalendar({ items }: { items: CalendarItem[] }) {
     });
   }
 
+  const arrow = "flex h-11 w-11 items-center justify-center border border-gold text-xl text-primary";
   return (
     <div>
-      <div className="rounded-xl border border-border bg-card p-4 shadow-[var(--shadow-card)]">
-        <div className="mb-3 flex items-center justify-between">
-          <button type="button" onClick={() => move(-1)} aria-label="Mese precedente" className="rounded-lg p-2 text-primary active:bg-muted">
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <p className="font-serif text-lg capitalize text-primary">
-            {MONTHS[cursor.m]} {cursor.y}
-          </p>
-          <button type="button" onClick={() => move(1)} aria-label="Mese successivo" className="rounded-lg p-2 text-primary active:bg-muted">
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        </div>
-        <div className="grid grid-cols-7 gap-1 text-center">
-          {["L", "M", "M", "G", "V", "S", "D"].map((d, i) => (
-            <span key={i} className="eyebrow py-1 text-muted-foreground">
-              {d}
+      <div className="flex items-center justify-between">
+        <button type="button" onClick={() => move(-1)} aria-label="Mese precedente" className={arrow}>
+          ‹
+        </button>
+        <p className="font-display text-lg font-bold uppercase tracking-[0.14em] text-primary">
+          {MONTHS[cursor.m]} {cursor.y}
+        </p>
+        <button type="button" onClick={() => move(1)} aria-label="Mese successivo" className={arrow}>
+          ›
+        </button>
+      </div>
+      <div className="mt-1.5 grid grid-cols-7 text-center">
+        {["L", "M", "M", "G", "V", "S", "D"].map((d, i) => (
+          <span key={i} className="py-1 font-display text-[10px] text-muted-foreground">
+            {d}
+          </span>
+        ))}
+        {cells.map((date, i) => {
+          if (!date) return <span key={`e${i}`} />;
+          const its = byDay.get(date) ?? [];
+          const n = Number(date.slice(8));
+          const isSel = selected === date;
+          return (
+            <button
+              key={date}
+              type="button"
+              onClick={() => setSelected((s) => (s === date ? null : date))}
+              aria-pressed={isSel}
+              aria-label={`${n}${its.length ? `, ${its.length} eventi` : ""}`}
+              className="flex h-11 items-center justify-center"
+            >
+              {its.length ? (
+                <span className={cn("shield-shape flex h-[42px] w-9 items-center justify-center font-display text-[15px] text-primary-foreground", BG[its[0]!.tone], isSel && "outline outline-2 outline-gold")}>{n}</span>
+              ) : (
+                <span className={cn("flex h-9 w-9 items-center justify-center text-[17px]", date === today && "font-semibold text-accent underline", isSel && "border border-accent")}>{n}</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      {legend && (
+        <div className="mt-2.5 flex flex-wrap gap-4 text-sm text-muted-foreground">
+          {legend.map((l) => (
+            <span key={l.label} className="flex items-center gap-1.5">
+              <span className={cn("h-2.5 w-2.5", BG[l.tone])} />
+              {l.label}
             </span>
           ))}
-          {cells.map((date, i) =>
-            date ? (
-              <button
-                key={date}
-                type="button"
-                onClick={() => setSelected((s) => (s === date ? null : date))}
-                className={cn(
-                  "flex aspect-square flex-col items-center justify-center rounded-lg text-sm",
-                  selected === date ? "bg-accent text-accent-foreground" : date === today ? "border border-accent text-accent" : "text-foreground active:bg-muted",
-                )}
-              >
-                {Number(date.slice(8))}
-                <span className="mt-0.5 flex h-1.5 gap-0.5">
-                  {(byDay.get(date) ?? []).slice(0, 3).map((it) => (
-                    <span
-                      key={it.key}
-                      className={cn("h-1.5 w-1.5 rounded-full", selected === date ? "bg-white" : it.tone === "success" ? "bg-success" : it.tone === "accent" ? "bg-accent" : it.tone === "muted" ? "bg-muted-foreground/50" : "bg-primary")}
-                    />
-                  ))}
-                </span>
-              </button>
-            ) : (
-              <span key={`e${i}`} />
-            ),
-          )}
         </div>
-      </div>
-      <div className="mt-5">
-        <p className="eyebrow mb-2 text-muted-foreground">{selected ? `Giorno ${Number(selected.slice(8))}` : "Questo mese"}</p>
+      )}
+      <div className="mt-[18px]">
+        <div className="mb-2 flex items-center gap-3">
+          <h2 className="shrink-0 font-display text-[12px] uppercase tracking-[0.24em] text-accent">{selected ? `Il giorno ${Number(selected.slice(8))}` : "In questo mese"}</h2>
+          <span className="h-px flex-1 bg-gold" aria-hidden="true" />
+        </div>
         {visible.length === 0 ? (
-          <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">Nessun evento.</p>
+          <p className="border border-dashed border-border bg-card/60 px-4 py-3 italic text-muted-foreground">Nessun evento.</p>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-border shadow-[var(--shadow-card)]">{visible.map((v) => <div key={v.key}>{v.render}</div>)}</div>
+          visible.map((v) => <div key={v.key}>{v.render}</div>)
         )}
       </div>
     </div>
