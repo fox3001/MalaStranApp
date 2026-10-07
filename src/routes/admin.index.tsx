@@ -1,40 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, useLogout } from "@/components/AppShell";
-import { TowerBackdrop } from "@/components/TowerBackdrop";
+import { FlockButton, TowerBackdrop } from "@/components/TowerBackdrop";
 import { Empty, ErrorBox, EventRow, Loading, SectionTitle, Stat, Tile } from "@/components/ui-kit";
 import { useAdminEvents, useAdminUsers, useNotifications } from "@/lib/api";
 import { useState } from "react";
 import { timeAgo, timeRange, todayIso } from "@/lib/format";
 
 export const Route = createFileRoute("/admin/")({ component: AdminHome });
-
-/** Tasto dello stormo: una sagoma di user con tre uccellini attorno. Acceso = un condor per ogni user registrato. */
-function FlockButton({ on, count, onToggle }: { on: boolean; count: number; onToggle: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-pressed={on}
-      aria-label={on ? `Stormo: ${count} condor, uno per ogni user. Tocca per tornare a 20` : "Mostra un condor per ogni user registrato"}
-      className={"relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-gold-light " + (on ? "bg-white text-accent" : "text-white")}
-    >
-      <svg viewBox="0 0 24 24" className="h-7 w-7" aria-hidden="true">
-        {/* user: testa e corpo */}
-        <circle cx="12" cy="12.2" r="3" fill="currentColor" />
-        <path d="M6.6 22c.6-3.8 2.7-5.6 5.4-5.6s4.8 1.8 5.4 5.6z" fill="currentColor" />
-        {/* tre uccellini fermi attorno */}
-        <path d="M1.2 7.4 q1.7-1.6 3.4 0 q1.7-1.6 3.4 0 q-1.7-.5-3.4 1.3 q-1.7-1.8-3.4-1.3z" fill="currentColor" />
-        <path d="M14.8 3.6 q1.7-1.6 3.4 0 q1.7-1.6 3.4 0 q-1.7-.5-3.4 1.3 q-1.7-1.8-3.4-1.3z" fill="currentColor" />
-        <path d="M16.6 11 q1.4-1.3 2.8 0 q1.4-1.3 2.8 0 q-1.4-.4-2.8 1.1 q-1.4-1.5-2.8-1.1z" fill="currentColor" />
-      </svg>
-      {on && (
-        <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border border-accent bg-white px-1 font-sans text-[10px] font-bold text-accent">
-          {count > 99 ? "99+" : count}
-        </span>
-      )}
-    </button>
-  );
-}
 
 const ico = (d: React.ReactNode) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.3} className="h-[26px] w-[26px]" aria-hidden="true">

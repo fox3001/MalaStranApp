@@ -165,6 +165,7 @@ export function AppShell({ area, title, children, back, eyebrow, below, plainHea
               <p className="font-display text-[10px] uppercase tracking-[0.24em] text-accent">{eyebrow ?? "Malastrana"}</p>
               <h1 className="truncate font-display text-xl font-bold leading-tight text-primary">{title}</h1>
             </div>
+            {headerExtra}
             <BellButton area="user" />
           </div>
         </header>

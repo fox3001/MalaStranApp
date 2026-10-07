@@ -21,3 +21,38 @@ export function TowerBackdrop({ birds = 20 }: { birds?: number }) {
   );
 }
 
+
+/** Tasto dello stormo: una sagoma di user con tre uccellini attorno. Acceso = un condor per ogni user registrato. */
+export function FlockButton({ on, count, onToggle, light = true, label }: { on: boolean; count: number; onToggle: () => void; light?: boolean; label?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={on}
+      aria-label={label ?? (on ? `Stormo: ${count} condor. Tocca per tornare a 20` : "Mostra un condor per ogni user")}
+      className={
+        "relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border " +
+        (light ? (on ? "border-gold-light bg-white text-accent" : "border-gold-light text-white") : on ? "border-primary bg-primary text-white" : "border-gold bg-card text-primary")
+      }
+    >
+      <svg viewBox="0 0 24 24" className="h-7 w-7" aria-hidden="true">
+        {/* user: testa e corpo */}
+        <circle cx="12" cy="12.2" r="3" fill="currentColor" />
+        <path d="M6.6 22c.6-3.8 2.7-5.6 5.4-5.6s4.8 1.8 5.4 5.6z" fill="currentColor" />
+        {/* tre uccellini fermi attorno */}
+        <path d="M1.2 7.4 q1.7-1.6 3.4 0 q1.7-1.6 3.4 0 q-1.7-.5-3.4 1.3 q-1.7-1.8-3.4-1.3z" fill="currentColor" />
+        <path d="M14.8 3.6 q1.7-1.6 3.4 0 q1.7-1.6 3.4 0 q-1.7-.5-3.4 1.3 q-1.7-1.8-3.4-1.3z" fill="currentColor" />
+        <path d="M16.6 11 q1.4-1.3 2.8 0 q1.4-1.3 2.8 0 q-1.4-.4-2.8 1.1 q-1.4-1.5-2.8-1.1z" fill="currentColor" />
+      </svg>
+      {on && (
+        <span className={
+            "absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border px-1 font-sans text-[10px] font-bold " +
+            (light ? "border-accent bg-white text-accent" : "border-primary bg-white text-primary")
+          }>
+          {count > 99 ? "99+" : count}
+        </span>
+      )}
+    </button>
+  );
+}
+

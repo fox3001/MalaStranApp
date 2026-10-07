@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
-import { TowerBackdrop } from "@/components/TowerBackdrop";
+import { FlockButton, TowerBackdrop } from "@/components/TowerBackdrop";
 import { ErrorBox, Loading } from "@/components/ui-kit";
 import { api, useTaverna, type Area } from "@/lib/api";
 import { timeAgo } from "@/lib/format";
@@ -26,8 +26,10 @@ export function TavernaPage({ area }: { area: Area }) {
   const writers = new Set(
     messages
       .filter((m) => new Date(m.created_at.replace(" ", "T") + "Z").getTime() >= since)
-      .map((m) => (m.author_role === "admin" ? "admin" : `u${m.user_id}`)),
+      .map((m) => (m.author_role === "admin" ? "admin" : `u${m.user_id}`))
+      .concat("admin"), // l'admin si conta sempre: si parte da 1
   ).size;
+  const [showWriters, setShowWriters] = useState(false);
 
   // quando arriva un messaggio nuovo si scende in fondo
   useEffect(() => {
@@ -52,7 +54,16 @@ export function TavernaPage({ area }: { area: Area }) {
   }
 
   return (
-    <AppShell area={area} eyebrow="Per tutti · user e admin" title="Taverna" backdrop={<TowerBackdrop birds={writers} />}>
+    <AppShell area={area} eyebrow="Per tutti · user e admin" title="Taverna" backdrop={<TowerBackdrop birds={showWriters ? writers : 20} />}
+      headerExtra={
+        <FlockButton
+          on={showWriters}
+          count={writers}
+          light={area === "admin"}
+          onToggle={() => setShowWriters((v) => !v)}
+          label={showWriters ? `${writers} condor: chi ha scritto nelle ultime 12 ore, admin compreso. Tocca per tornare a 20` : "Mostra un condor per chi ha scritto nelle ultime 12 ore"}
+        />
+      }>
       <div className="h-[262px]" aria-hidden="true" />
       <section className="relative flex h-[calc(100dvh-76px-262px-112px)] min-h-[360px] flex-col border border-gold bg-card">
         <div className="flex items-center justify-between gap-2 border-b border-gold px-3 py-1.5">
