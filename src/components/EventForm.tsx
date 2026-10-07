@@ -11,7 +11,7 @@ export const EMPTY_EVENT: EventInput = {
 };
 
 /** Modulo dati evento, usato sia per creare sia per modificare. */
-export function EventForm({ initial, submitLabel, busy, onSubmit, extra }: { initial: EventInput; submitLabel: string; busy?: boolean; onSubmit: (v: EventInput) => void; extra?: ReactNode }) {
+export function EventForm({ initial, submitLabel, busy, onSubmit, extra }: { initial: EventInput; submitLabel: string; busy?: boolean; onSubmit: (v: EventInput) => void; extra?: ReactNode | ((v: EventInput) => ReactNode) }) {
   const [v, setV] = useState<EventInput>(initial);
   const set = (k: keyof EventInput) => (e: { target: { value: string } }) => setV((s) => ({ ...s, [k]: e.target.value }));
 
@@ -74,7 +74,7 @@ export function EventForm({ initial, submitLabel, busy, onSubmit, extra }: { ini
         <TextArea label="Note interne (solo admin)" value={v.note_admin} onChange={set("note_admin")} />
       </Card>
 
-      {extra}
+      {typeof extra === "function" ? extra(v) : extra}
 
       <Button type="submit" disabled={busy} full>
         {busy ? "Salvataggio…" : submitLabel}

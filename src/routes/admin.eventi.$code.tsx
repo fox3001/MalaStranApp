@@ -9,6 +9,7 @@ import { Button, Card, ErrorBox, Field, Loading, ParticipantTag, SectionTitle, S
 import { downloadText, groupRows, useAdminEvent, useAdminUsers, useApiMutation, useResoconto, type LoadRow, type MalEvent, type Participant, type ParticipantStatus } from "@/lib/api";
 import { PARTICIPANT_LABEL, formatDate, formatDateLong, isAway, timeRange } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { InvitePicker } from "@/components/InvitePicker";
 
 export const Route = createFileRoute("/admin/eventi/$code")({ component: EventoAdmin });
 
@@ -153,11 +154,6 @@ function PeopleTab({ code, date, participants }: { code: string; date: string; p
   const removeP = useApiMutation<number>("admin", (userId) => ({ path: `/admin/events/${code}/participants/${userId}`, method: "DELETE" }), { invalidate: [["events"], ["users"]] });
 
   const invited = new Set(participants.map((p) => p.user_id));
-  const candidates = (users.data?.users ?? []).filter((u) => u.attivo && !invited.has(u.id)).filter((u) => {
-    const q = search.trim().toLowerCase();
-    if (!q) return true;
-    return [u.nome, u.cognome, u.username, u.qualifica, ...u.competenze, ...(u.costumi ?? [])].join(" ").toLowerCase().includes(q);
-  });
   const sorted = useMemo(() => [...participants].sort((a, b) => ORDER.indexOf(a.stato) - ORDER.indexOf(b.stato)), [participants]);
   const counts = ORDER.map((s) => [s, participants.filter((p) => p.stato === s).length] as const).filter(([, n]) => n > 0);
 
@@ -240,40 +236,16 @@ function PeopleTab({ code, date, participants }: { code: string; date: string; p
       {picking ? (
         <Card className="grid gap-3">
           <SectionTitle>Invita user</SectionTitle>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Filtra per nome, competenza, costume…"
-            className="min-h-11 rounded-lg border border-border-strong bg-surface px-3 text-sm outline-none focus:border-accent"
+          <InvitePicker
+            date={date}
+            excludeIds={invited}
+            selected={selected}
+            setSelected={setSelected}
+            tlIds={tlIds}
+            setTlIds={setTlIds}
+            search={search}
+            setSearch={setSearch}
           />
-          {candidates.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{(users.data?.users.length ?? 0) === 0 ? "Non ci sono user: creali prima dalla rubrica." : "Nessun altro user da invitare."}</p>
-          ) : (
-            <ul className="max-h-72 overflow-auto">
-              {candidates.map((u) => (
-                <li key={u.id} className="flex items-center justify-between gap-2 border-b border-border py-2 last:border-b-0">
-                  <label className="flex min-h-11 min-w-0 flex-1 items-center gap-3 text-sm">
-                    <input type="checkbox" className="h-5 w-5" checked={selected.includes(u.id)} onChange={(e) => setSelected((s) => (e.target.checked ? [...s, u.id] : s.filter((x) => x !== u.id)))} />
-                    <span className="min-w-0">
-                      <span className="block">
-                        {u.nome} {u.cognome}
-                      </span>
-                      {isAway(date, u.assenze) && (
-                        <span className="mt-0.5 inline-block bg-primary px-1.5 py-px font-display text-[10px] uppercase tracking-[0.1em] text-white">Non c'è quel giorno</span>
-                      )}
-                      {u.competenze.length > 0 && <span className="block truncate text-xs text-muted-foreground">{u.competenze.join(", ")}</span>}
-                    </span>
-                  </label>
-                  {selected.includes(u.id) && (
-                    <label className="flex shrink-0 items-center gap-1.5 rounded-full border border-primary/40 px-2.5 py-1 text-[11px] font-semibold text-primary">
-                      <input type="checkbox" checked={tlIds.includes(u.id)} onChange={(e) => setTlIds((s) => (e.target.checked ? [...s, u.id] : s.filter((x) => x !== u.id)))} />
-                      Team leader
-                    </label>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
           <div className="flex gap-2">
             <Button
               type="button"

@@ -286,3 +286,8 @@ html {
   .flock-up, .flock-down, .flock-bob { animation: none; }
   .flock-mid { animation: none; opacity: 0; }
 }
+
+/* giorni in cui lo user non c'è: tratteggio bordeaux leggero */
+.away-day {
+  background: repeating-linear-gradient(135deg, rgb(91 26 30 / 0.16) 0 2px, transparent 2px 6px);
+}

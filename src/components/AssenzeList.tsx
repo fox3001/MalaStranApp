@@ -14,6 +14,7 @@ export function AssenzeList({
   onDelete,
   adding,
   readOnly,
+  hideAdd,
   empty = "Nessun giorno segnato.",
 }: {
   assenze: Assenza[];
@@ -21,6 +22,7 @@ export function AssenzeList({
   onDelete?: (id: number) => void;
   adding?: boolean;
   readOnly?: boolean;
+  hideAdd?: boolean;
   empty?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -40,7 +42,7 @@ export function AssenzeList({
   return (
     <div>
       <div className="flex flex-wrap gap-1.5">
-        {assenze.length === 0 && readOnly && <p className="text-sm italic text-muted-foreground">{empty}</p>}
+        {assenze.length === 0 && (readOnly || hideAdd) && <p className="text-sm italic text-muted-foreground">{empty}</p>}
         {assenze.map((a) => (
           <span key={a.id ?? `${a.dal}-${a.al}`} className="inline-flex items-center gap-1 border border-primary bg-card py-0.5 pl-2.5 pr-1 text-[15px] text-primary">
             {formatAssenza(a.dal, a.al)}
@@ -57,7 +59,7 @@ export function AssenzeList({
             {(readOnly || a.id === undefined) && <span className="pr-1.5" />}
           </span>
         ))}
-        {!readOnly && !open && (
+        {!readOnly && !hideAdd && !open && (
           <button
             type="button"
             onClick={() => setOpen(true)}

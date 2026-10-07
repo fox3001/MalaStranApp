@@ -13,7 +13,23 @@ export interface CalendarItem {
 const BG: Record<Tone, string> = { primary: "bg-primary", accent: "bg-accent", success: "bg-accent", muted: "bg-[#8C7F72]" };
 
 /** Calendario mensile: i giorni con eventi diventano piccoli scudi colorati, l'elenco del mese è sotto. */
-export function MonthCalendar({ items, legend }: { items: CalendarItem[]; legend?: { tone: Tone; label: string }[] }) {
+export function MonthCalendar({
+  items,
+  legend,
+  away,
+  awayMode,
+  onAwayToggle,
+  awayLegend,
+}: {
+  items: CalendarItem[];
+  legend?: { tone: Tone; label: string }[];
+  /** giorni in cui lo user ha segnato che non c'è */
+  away?: Set<string>;
+  /** se attivo, toccare un giorno lo segna/toglie come "non ci sono" */
+  awayMode?: boolean;
+  onAwayToggle?: (date: string) => void;
+  awayLegend?: string;
+}) {
   const today = todayIso();
   const [cursor, setCursor] = useState(() => ({ y: Number(today.slice(0, 4)), m: Number(today.slice(5, 7)) - 1 }));
   const [selected, setSelected] = useState<string | null>(null);
@@ -65,32 +81,61 @@ export function MonthCalendar({ items, legend }: { items: CalendarItem[]; legend
           const its = byDay.get(date) ?? [];
           const n = Number(date.slice(8));
           const isSel = selected === date;
+          const isAway = !!away?.has(date);
+          const past = date < today;
           return (
             <button
               key={date}
               type="button"
-              onClick={() => setSelected((s) => (s === date ? null : date))}
-              aria-pressed={isSel}
-              aria-label={`${n}${its.length ? `, ${its.length} eventi` : ""}`}
-              className="flex h-11 items-center justify-center"
+              disabled={awayMode && past}
+              onClick={() => (awayMode ? onAwayToggle?.(date) : setSelected((s) => (s === date ? null : date)))}
+              aria-pressed={awayMode ? isAway : isSel}
+              aria-label={`${n}${its.length ? `, ${its.length} eventi` : ""}${isAway ? ", non ci sei" : ""}`}
+              className={cn("flex h-11 items-center justify-center", awayMode && past && "opacity-35")}
             >
               {its.length ? (
-                <span className={cn("shield-shape flex h-[42px] w-9 items-center justify-center font-display text-[15px] text-primary-foreground", BG[its[0]!.tone], isSel && "outline outline-2 outline-gold")}>{n}</span>
+                <span
+                  className={cn(
+                    "shield-shape flex h-[42px] w-9 items-center justify-center font-display text-[15px] text-primary-foreground",
+                    BG[its[0]!.tone],
+                    isSel && "outline outline-2 outline-gold",
+                    isAway && "line-through opacity-60",
+                  )}
+                >
+                  {n}
+                </span>
+              ) : isAway ? (
+                <span className="away-day flex h-9 w-9 items-center justify-center border border-primary text-[17px] text-primary line-through">{n}</span>
               ) : (
-                <span className={cn("flex h-9 w-9 items-center justify-center text-[17px]", date === today && "font-semibold text-accent underline", isSel && "border border-accent")}>{n}</span>
+                <span
+                  className={cn(
+                    "flex h-9 w-9 items-center justify-center text-[17px]",
+                    date === today && "font-semibold text-accent underline",
+                    isSel && "border border-accent",
+                    awayMode && !past && "border border-dashed border-border",
+                  )}
+                >
+                  {n}
+                </span>
               )}
             </button>
           );
         })}
       </div>
-      {legend && (
+      {(legend || awayLegend) && (
         <div className="mt-2.5 flex flex-wrap gap-4 text-sm text-muted-foreground">
-          {legend.map((l) => (
+          {legend?.map((l) => (
             <span key={l.label} className="flex items-center gap-1.5">
               <span className={cn("h-2.5 w-2.5", BG[l.tone])} />
               {l.label}
             </span>
           ))}
+          {awayLegend && (
+            <span className="flex items-center gap-1.5">
+              <span className="away-day h-2.5 w-2.5 border border-primary" />
+              {awayLegend}
+            </span>
+          )}
         </div>
       )}
       <div className="mt-[18px]">

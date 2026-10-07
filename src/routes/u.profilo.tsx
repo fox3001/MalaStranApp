@@ -1,11 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { AppShell, useLogout } from "@/components/AppShell";
-import { AssenzeList } from "@/components/AssenzeList";
 import { CostumeList } from "@/components/CostumeList";
 import { SkillPicker } from "@/components/SkillPicker";
 import { Avatar, Button, Card, ErrorBox, Loading, SectionTitle, TextArea, TextInput } from "@/components/ui-kit";
-import { useApiMutation, useMyAssenze, useMyCostumes, useProfile, type User } from "@/lib/api";
+import { useApiMutation, useMyCostumes, useProfile, type User } from "@/lib/api";
 
 export const Route = createFileRoute("/u/profilo")({ component: Profilo });
 
@@ -26,9 +25,6 @@ function ProfileForm({ user }: { user: User }) {
   const save = useApiMutation<Partial<User>>("user", (body) => ({ path: "/profile", method: "PATCH", body }), { success: "Profilo salvato", invalidate: [["profile"]] });
   const addCostume = useApiMutation<{ nome: string; categoria: string; note: string }>("user", (body) => ({ path: "/profile/costumes", method: "POST", body }), { success: "Costume aggiunto", invalidate: [["costumes"]] });
   const delCostume = useApiMutation<number>("user", (id) => ({ path: `/profile/costumes/${id}`, method: "DELETE" }), { invalidate: [["costumes"]] });
-  const assenze = useMyAssenze();
-  const addAssenza = useApiMutation<{ dal: string; al: string }>("user", (body) => ({ path: "/profile/assenze", method: "POST", body }), { success: "Giorni segnati", invalidate: [["assenze"]] });
-  const delAssenza = useApiMutation<number>("user", (id) => ({ path: `/profile/assenze/${id}`, method: "DELETE" }), { invalidate: [["assenze"]] });
   const changePwd = useApiMutation<{ attuale: string; nuova: string }>("user", (body) => ({ path: "/profile/password", method: "POST", body }), { success: "Password cambiata" });
 
   const set = (k: keyof User) => (e: { target: { value: string } }) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -86,12 +82,10 @@ function ProfileForm({ user }: { user: User }) {
 
       <Card className="mt-6">
         <SectionTitle>I giorni in cui non ci sei</SectionTitle>
-        <p className="mb-3 text-[15px] italic text-muted-foreground">Segna i giorni in cui sai già di non poter lavorare: l'admin li vede quando chiama.</p>
-        {assenze.isLoading ? (
-          <Loading />
-        ) : (
-          <AssenzeList assenze={assenze.data?.assenze ?? []} onAdd={(a) => addAssenza.mutate(a)} onDelete={(id) => delAssenza.mutate(id)} adding={addAssenza.isPending} />
-        )}
+        <p className="mb-3 text-[15px] italic text-muted-foreground">Si segnano dal calendario: tocchi i giorni in cui non puoi lavorare e l'admin non ti proporrà per quelle date.</p>
+        <Link to="/u/calendario" className="inline-flex min-h-11 items-center border border-primary px-3 font-display text-[12px] uppercase tracking-[0.14em] text-primary">
+          Apri il calendario
+        </Link>
       </Card>
 
       <Card className="mt-6">
