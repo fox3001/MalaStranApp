@@ -1,10 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { AppShell } from "@/components/AppShell";
-import { Empty, ErrorBox, Loading, PageTitle, ParticipantTag, StatusTag } from "@/components/ui-kit";
+import { AppShell, Tabs } from "@/components/AppShell";
+import { Empty, ErrorBox, Loading, ParticipantTag, ShieldDate, StatusTag, Tag } from "@/components/ui-kit";
 import { useMyEvents } from "@/lib/api";
-import { dayNumber, monthShort, timeRange, todayIso } from "@/lib/format";
-import { cn } from "@/lib/utils";
+import { timeRange, todayIso } from "@/lib/format";
 
 export const Route = createFileRoute("/u/eventi/")({ component: MieiEventi });
 
@@ -16,18 +15,22 @@ function MieiEventi() {
   if (past) list.reverse();
 
   return (
-    <AppShell area="user" title="I miei eventi">
-      <PageTitle eyebrow="Area personale" title="I miei eventi" subtitle="Gli eventi per cui l'ufficio ti ha chiesto la disponibilità." />
-      <div className="mt-4 grid grid-cols-2 gap-1 rounded-lg border border-border bg-surface p-1">
-        {[
-          [false, "Prossimi"],
-          [true, "Passati"],
-        ].map(([v, label]) => (
-          <button key={String(v)} type="button" onClick={() => setPast(v as boolean)} className={cn("min-h-10 rounded-md text-xs font-semibold uppercase tracking-[0.06em]", past === v ? "bg-accent text-accent-foreground" : "text-muted-foreground")}>
-            {label as string}
-          </button>
-        ))}
-      </div>
+    <AppShell
+      area="user"
+      eyebrow="Chiamate & repliche"
+      title="I miei eventi"
+      below={
+        <Tabs
+          tone="primary"
+          value={past ? "passati" : "prossimi"}
+          onChange={(v) => setPast(v === "passati")}
+          items={[
+            { value: "prossimi", label: "Prossimi" },
+            { value: "passati", label: "Passati" },
+          ]}
+        />
+      }
+    >
       <section className="mt-4">
         {q.isLoading ? (
           <Loading />
@@ -36,28 +39,21 @@ function MieiEventi() {
         ) : list.length === 0 ? (
           <Empty>{past ? "Nessun evento passato." : "Nessun evento in programma. Quando l'ufficio ti invita, lo trovi qui."}</Empty>
         ) : (
-          <ul className="overflow-hidden rounded-xl border border-border bg-card shadow-[var(--shadow-card)]">
-            {list.map((e) => (
-              <li key={e.code} className="border-b border-border last:border-b-0">
-                <Link to="/u/eventi/$code" params={{ code: e.code }} className="grid grid-cols-[3.5rem_minmax(0,1fr)] gap-3 px-4 py-4 active:bg-muted">
-                  <span className="flex flex-col items-center justify-center rounded-lg bg-secondary px-2 py-1.5">
-                    <span className="font-serif text-2xl leading-none text-primary">{dayNumber(e.data)}</span>
-                    <span className="eyebrow mt-1 text-muted-foreground">{monthShort(e.data)}</span>
+          list.map((e) => {
+            const tone = e.stato === "annullato" || e.mio_stato === "unavailable" || e.mio_stato === "rejected" ? "muted" : e.mio_stato === "pending" ? "primary" : "accent";
+            return (
+              <Link key={e.code} to="/u/eventi/$code" params={{ code: e.code }} className="mb-2.5 flex items-center gap-3.5 border border-border bg-card px-3 py-2.5 active:bg-muted">
+                <ShieldDate date={e.data} tone={tone} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[19px] font-semibold leading-tight">{e.nome}</span>
+                  <span className="block truncate text-[15px] text-muted-foreground">
+                    {[e.tipo, e.is_tl ? "team leader" : e.ruolo_evento, e.luogo].filter(Boolean).join(" · ") || timeRange(e.ora_inizio, e.ora_fine)}
                   </span>
-                  <span className="min-w-0">
-                    <span className="block truncate font-serif text-base text-foreground">{e.nome}</span>
-                    <span className="block truncate text-xs text-muted-foreground">
-                      {e.luogo || "Luogo da definire"} · {timeRange(e.ora_inizio, e.ora_fine)}
-                    </span>
-                    <span className="mt-2 flex flex-wrap gap-1.5">
-                      {e.stato === "annullato" ? <StatusTag status="annullato" /> : e.mio_stato && <ParticipantTag status={e.mio_stato} />}
-                      {e.mio_stato === "pending" && e.stato !== "annullato" && <span className="self-center text-xs font-semibold text-accent">Rispondi →</span>}
-                    </span>
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+                </span>
+                {e.stato === "annullato" ? <StatusTag status="annullato" /> : e.mio_stato === "pending" ? <Tag tone="primary" filled>Rispondi</Tag> : e.mio_stato && <ParticipantTag status={e.mio_stato} />}
+              </Link>
+            );
+          })
         )}
       </section>
     </AppShell>

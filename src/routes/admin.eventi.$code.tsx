@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { AlertTriangle, Check, MessageSquare, Pencil, Trash2, UserPlus, X } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
-import { AppShell } from "@/components/AppShell";
+import { AppShell, Tabs } from "@/components/AppShell";
+import { LedgerHead, RoundCheck } from "@/components/BollaRound";
 import { BollaImport, type ImportRow } from "@/components/BollaImport";
 import { EventForm } from "@/components/EventForm";
 import { Button, Card, ErrorBox, Field, Loading, ParticipantTag, SectionTitle, StatusTag } from "@/components/ui-kit";
@@ -19,7 +20,7 @@ function EventoAdmin() {
   const [tab, setTab] = useState<Tab>("persone");
 
   return (
-    <AppShell area="admin" title={q.data?.event.nome ?? "Evento"} back="/admin/eventi">
+    <AppShell area="admin" eyebrow={q.data ? `Evento · ${formatDate(q.data.event.data)}` : "Evento"} title={q.data?.event.nome ?? "Evento"} back="/admin/eventi">
       {q.isLoading ? (
         <Loading />
       ) : q.isError || !q.data ? (
@@ -28,32 +29,28 @@ function EventoAdmin() {
         </div>
       ) : (
         <>
-          <section className="pt-5">
-            <p className="eyebrow text-accent">{q.data.event.code}</p>
-            <h2 className="mt-1 font-serif text-2xl text-primary">{q.data.event.nome}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
+          <section className="pt-3">
+            <p className="italic text-muted-foreground">
               {formatDateLong(q.data.event.data)} · {timeRange(q.data.event.ora_inizio, q.data.event.ora_fine)}
               {q.data.event.luogo && ` · ${q.data.event.luogo}`}
             </p>
-            <div className="mt-2">
+            <div className="mt-1.5">
               <StatusTag status={q.data.event.stato} />
             </div>
             <CloseBox code={code} event={q.data.event} />
           </section>
 
-          <div className="mt-5 grid grid-cols-4 gap-1 rounded-lg border border-border bg-surface p-1">
-            {(
-              [
-                ["persone", `Persone ${q.data.participants.length}`],
-                ["bolla", `Bolla ${q.data.load_rows.length}`],
-                ["resoconto", "Resoconto"],
-                ["info", "Dettagli"],
-              ] as Array<[Tab, string]>
-            ).map(([k, label]) => (
-              <button key={k} type="button" onClick={() => setTab(k)} className={cn("min-h-10 rounded-md text-[11px] font-semibold uppercase tracking-[0.04em]", tab === k ? "bg-accent text-accent-foreground" : "text-muted-foreground")}>
-                {label}
-              </button>
-            ))}
+          <div className="-mx-5 mt-4">
+            <Tabs
+              value={tab}
+              onChange={setTab}
+              items={[
+                { value: "persone", label: `Persone ${q.data.participants.length}` },
+                { value: "bolla", label: `Bolla ${q.data.load_rows.length}` },
+                { value: "resoconto", label: "Resoconto" },
+                { value: "info", label: "Dettagli" },
+              ]}
+            />
           </div>
 
           <div className="mt-5">
@@ -353,7 +350,7 @@ function BollaTab({ code, rows, participants, closed }: { code: string; rows: Lo
   }
 
   const issues = rows.filter((r) => r.damaged || r.comment).length;
-  const input = "min-h-11 w-full rounded-lg border border-border-strong bg-surface px-3 text-sm outline-none focus:border-accent";
+  const input = "min-h-11 w-full border border-border border-b-[1.5px] border-b-gold bg-card px-3 text-[16px] outline-none focus:border-accent";
 
   return (
     <div className="grid gap-5">
@@ -390,51 +387,49 @@ function BollaTab({ code, rows, participants, closed }: { code: string; rows: Lo
           const done = list.filter((r) => r.returned).length;
           const warn = list.some((r) => r.damaged || r.comment);
           return (
-            <section key={cat} className="overflow-hidden rounded-xl border border-border bg-card shadow-[var(--shadow-card)]">
-              <button type="button" onClick={() => setOpen((o) => ({ ...o, [cat]: !isOpen }))} className="flex w-full items-center justify-between gap-2 bg-secondary px-4 py-3 text-left">
-                <span className="min-w-0">
-                  <span className="block truncate font-serif text-base text-primary">{cat}</span>
-                  <span className="block text-xs text-muted-foreground">
-                    {list.length} voci · prep {list.filter((r) => r.prep).length} · entrata {list.filter((r) => r.present).length} · uscita {done}
-                    {warn && <span className="font-semibold text-destructive"> · segnalazioni</span>}
+            <section key={cat} className="border border-gold bg-card">
+              <button type="button" onClick={() => setOpen((o) => ({ ...o, [cat]: !isOpen }))} className="block w-full text-left" aria-expanded={isOpen}>
+                {isOpen ? (
+                  <LedgerHead title={cat} count={list.length} columns={["Prep", "Entrata", "Uscita", "Danni"]} />
+                ) : (
+                  <span className="flex items-center justify-between gap-2 px-3.5 py-2.5">
+                    <span className="min-w-0 truncate font-display text-[12px] uppercase tracking-[0.1em] text-primary">{cat}</span>
+                    <span className="shrink-0 text-sm italic text-muted-foreground">
+                      {done}/{list.length}
+                      {warn && <span className="text-primary"> · danni</span>} ▾
+                    </span>
                   </span>
-                </span>
-                <span className="shrink-0 text-xs font-semibold text-accent">{isOpen ? "Chiudi ▲" : "Apri ▼"}</span>
+                )}
               </button>
-              {isOpen && (
-                <ul>
-                  {list.map((r) => (
-                    <li key={r.id} className={cn("border-b border-border px-4 py-3 last:border-b-0", r.damaged && "bg-destructive/5")}>
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="min-w-0">
-                          <span className="block text-sm font-medium text-foreground">
-                            {r.quantita > 1 && `${r.quantita}× `}
-                            {r.item}
-                          </span>
-                          {r.note && <span className="block text-xs text-muted-foreground">{r.note}</span>}
+              {isOpen &&
+                list.map((r) => (
+                  <div key={r.id} className={cn("border-b border-line last:border-b-0", r.damaged && "bg-danger-soft")}>
+                    <div className="grid min-h-[50px] items-center px-3.5 py-1" style={{ gridTemplateColumns: "minmax(0,1fr) repeat(4, 52px)" }}>
+                      <span className="flex min-w-0 items-start gap-1 pr-1">
+                        <span className="min-w-0 text-[16px] leading-tight">
+                          {r.quantita > 1 && `${r.quantita}× `}
+                          {r.item}
+                          {r.note && <span className="block text-[13px] italic text-muted-foreground">{r.note}</span>}
                         </span>
                         {!closed && (
-                          <button type="button" aria-label="Elimina riga" onClick={() => window.confirm(`Togliere "${r.item}" dalla bolla?`) && del.mutate(r.id)} className="rounded p-1.5 text-muted-foreground">
-                            <Trash2 className="h-4 w-4" />
+                          <button type="button" aria-label="Elimina riga" onClick={() => window.confirm(`Togliere "${r.item}" dalla bolla?`) && del.mutate(r.id)} className="shrink-0 p-1 text-muted-foreground">
+                            <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         )}
+                      </span>
+                      <RoundCheck label="Prep" disabled={closed} on={r.prep} onClick={() => patch.mutate({ id: r.id, prep: !r.prep })} />
+                      <RoundCheck label="Entrata" disabled={closed} on={r.present} onClick={() => patch.mutate({ id: r.id, present: !r.present })} />
+                      <RoundCheck label="Uscita" disabled={closed} on={r.returned} onClick={() => patch.mutate({ id: r.id, returned: !r.returned })} />
+                      <RoundCheck label="Danni" disabled={closed} on={r.damaged} danger onClick={() => patch.mutate({ id: r.id, damaged: !r.damaged })} />
+                    </div>
+                    {(r.comment || closed || r.annotazione) && (
+                      <div className="px-3.5 pb-2.5">
+                        {r.comment && <p className="text-[15px] italic text-primary">« {r.comment} »</p>}
+                        {closed ? <Annotation row={r} onSave={(annotazione) => patch.mutate({ id: r.id, annotazione })} /> : r.annotazione && <p className="text-[14px] text-primary">Annotazione: {r.annotazione}</p>}
                       </div>
-                      <div className="mt-2 grid grid-cols-4 gap-1.5">
-                        <BigCheck label="Prep" disabled={closed} on={r.prep} onClick={() => patch.mutate({ id: r.id, prep: !r.prep })} />
-                        <BigCheck label="Entrata" disabled={closed} on={r.present} onClick={() => patch.mutate({ id: r.id, present: !r.present })} />
-                        <BigCheck label="Uscita" disabled={closed} on={r.returned} onClick={() => patch.mutate({ id: r.id, returned: !r.returned })} />
-                        <BigCheck label="Danni" disabled={closed} on={r.damaged} danger onClick={() => patch.mutate({ id: r.id, damaged: !r.damaged })} />
-                      </div>
-                      {r.comment && (
-                        <p className="mt-2 flex items-start gap-1.5 rounded-md bg-muted px-2 py-1.5 text-xs">
-                          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" /> {r.comment}
-                        </p>
-                      )}
-                      {closed ? <Annotation row={r} onSave={(annotazione) => patch.mutate({ id: r.id, annotazione })} /> : r.annotazione && <p className="mt-2 text-xs text-primary">Annotazione: {r.annotazione}</p>}
-                    </li>
-                  ))}
-                </ul>
-              )}
+                    )}
+                  </div>
+                ))}
             </section>
           );
         })
@@ -478,24 +473,6 @@ function BollaTab({ code, rows, participants, closed }: { code: string; rows: Lo
   );
 }
 
-function BigCheck({ label, on, onClick, danger, disabled }: { label: string; on: boolean; onClick: () => void; danger?: boolean; disabled?: boolean }) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      aria-pressed={on}
-      className={cn(
-        "flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-lg border text-[11px] font-semibold disabled:cursor-not-allowed disabled:opacity-60",
-        on ? (danger ? "border-destructive bg-destructive text-white" : "border-success bg-success text-white") : "border-border-strong bg-surface text-muted-foreground",
-      )}
-    >
-      <span className={cn("flex h-4 w-4 items-center justify-center rounded border", on ? "border-white" : "border-border-strong")}>{on && <Check className="h-3 w-3" />}</span>
-      {label}
-    </button>
-  );
-}
-
 function Annotation({ row, onSave }: { row: LoadRow; onSave: (v: string) => void }) {
   const [v, setV] = useState(row.annotazione);
   return (
@@ -504,9 +481,9 @@ function Annotation({ row, onSave }: { row: LoadRow; onSave: (v: string) => void
         value={v}
         onChange={(e) => setV(e.target.value)}
         placeholder="Annotazione admin (va nel .txt finale)"
-        className="min-h-10 flex-1 rounded-lg border border-primary/40 bg-surface px-3 text-xs outline-none focus:border-primary"
+        className="min-h-10 flex-1 border border-primary bg-card px-3 text-[15px] outline-none"
       />
-      <button type="button" disabled={v === row.annotazione} onClick={() => onSave(v)} className="min-h-10 rounded-lg border border-primary px-3 text-xs font-semibold text-primary disabled:opacity-40">
+      <button type="button" disabled={v === row.annotazione} onClick={() => onSave(v)} className="min-h-10 border border-primary px-3 font-display text-[10px] uppercase tracking-[0.14em] text-primary disabled:opacity-40">
         Salva
       </button>
     </div>
@@ -519,31 +496,34 @@ function CloseBox({ code, event }: { code: string; event: MalEvent }) {
   if (event.stato === "annullato") return null;
   if (event.stato === "chiuso")
     return (
-      <div className="mt-3 rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm">
-        <p className="font-semibold text-primary">Evento chiuso{event.chiuso_da ? ` da ${event.chiuso_da}` : ""}</p>
-        <p className="mt-1 text-xs text-muted-foreground">Ora lo modifichi solo tu (dettagli e annotazioni sulla bolla) fino all'archiviazione.</p>
-        <button type="button" disabled={reopen.isPending} onClick={() => window.confirm("Riaprire l'evento? I team leader potranno di nuovo spuntare la bolla.") && reopen.mutate()} className="mt-2 text-xs font-semibold text-accent underline">
+      <div className="mt-3 border border-primary bg-danger-soft p-3">
+        <p className="font-display text-[12px] uppercase tracking-[0.12em] text-primary">Evento chiuso{event.chiuso_da ? ` da ${event.chiuso_da}` : ""}</p>
+        <p className="mt-1 text-[15px] italic text-muted-foreground">Ora lo modifichi solo tu (dettagli e annotazioni sulla bolla) fino all'archiviazione.</p>
+        <button type="button" disabled={reopen.isPending} onClick={() => window.confirm("Riaprire l'evento? I team leader potranno di nuovo spuntare la bolla.") && reopen.mutate()} className="mt-2 font-display text-[11px] uppercase tracking-[0.14em] text-accent underline">
           Riapri evento
         </button>
       </div>
     );
   return (
-    <button
-      type="button"
-      disabled={close.isPending}
-      onClick={() => window.confirm("Chiudere l'evento? Le spunte della bolla si bloccano per tutti; resterà modificabile solo da te.") && close.mutate()}
-      className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-primary bg-primary text-xs font-semibold uppercase tracking-[0.08em] text-white"
-    >
-      Evento chiuso
-    </button>
+    <div className="mt-3 flex items-center gap-3 border border-gold bg-card p-3">
+      <p className="flex-1 text-[15px] italic text-muted-foreground">Quando la serata è finita, chiudi l'evento: la bolla si blocca.</p>
+      <button
+        type="button"
+        disabled={close.isPending}
+        onClick={() => window.confirm("Chiudere l'evento? Le spunte della bolla si bloccano per tutti; resterà modificabile solo da te.") && close.mutate()}
+        className="min-h-11 shrink-0 bg-primary px-3.5 font-display text-[11px] uppercase tracking-[0.14em] text-primary-foreground"
+      >
+        Chiudi evento
+      </button>
+    </div>
   );
 }
 
 function Counter({ label, value, warn }: { label: string; value: string; warn?: boolean }) {
   return (
-    <div className={cn("rounded-lg border bg-card p-2", warn ? "border-destructive/40" : "border-border")}>
-      <p className={cn("font-serif text-xl", warn ? "text-destructive" : "text-primary")}>{value}</p>
-      <p className="eyebrow text-muted-foreground">{label}</p>
+    <div className={cn("border bg-card p-2", warn ? "border-primary" : "border-gold")}>
+      <p className={cn("font-display text-xl", warn ? "text-primary" : "text-accent")}>{value}</p>
+      <p className="font-display text-[9px] uppercase tracking-[0.12em] text-muted-foreground">{label}</p>
     </div>
   );
 }

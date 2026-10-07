@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Check, ClipboardCheck, Phone, X } from "lucide-react";
+import { ClipboardCheck, Phone } from "lucide-react";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { Button, Card, ErrorBox, Field, Loading, ParticipantTag, SectionTitle, StatusTag } from "@/components/ui-kit";
+import { Button, Card, ErrorBox, Field, Loading, ParticipantTag, SectionTitle, ShieldDate, StatusTag } from "@/components/ui-kit";
 import { useApiMutation, useMyEvent } from "@/lib/api";
 import { formatDateLong, timeRange } from "@/lib/format";
 
@@ -19,7 +19,7 @@ function EventoUser() {
   });
 
   return (
-    <AppShell area="user" title="Evento" back="/u/eventi">
+    <AppShell area="user" eyebrow={q.data ? `Evento${q.data.event.tipo ? " · " + q.data.event.tipo : ""}` : "Evento"} title={q.data?.event.nome ?? "Evento"} back="/u/eventi">
       {q.isLoading ? (
         <Loading />
       ) : q.isError || !q.data ? (
@@ -33,12 +33,12 @@ function EventoUser() {
           const canAnswer = !closed && (p.stato === "pending" || p.stato === "available" || p.stato === "unavailable");
           return (
             <>
-              <section className="pt-5">
-                <p className="eyebrow text-accent">{e.code}</p>
-                <h2 className="mt-1 font-serif text-2xl text-primary">{e.nome}</h2>
-                <p className="mt-1 text-sm text-foreground">{formatDateLong(e.data)}</p>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {closed ? <StatusTag status={e.stato} /> : <ParticipantTag status={p.stato} />}
+              <section className="flex items-center gap-4 pt-4">
+                <ShieldDate date={e.data} tone={closed ? "muted" : p.stato === "confirmed" ? "accent" : "primary"} size="lg" />
+                <div className="min-w-0">
+                  <p className="font-display text-[10px] uppercase tracking-[0.2em] text-accent">{formatDateLong(e.data)}</p>
+                  <p className="text-[22px] font-semibold leading-tight">{p.is_tl ? "Sei team leader" : p.ruolo_evento || e.nome}</p>
+                  <div className="mt-1">{closed ? <StatusTag status={e.stato} /> : <ParticipantTag status={p.stato} />}</div>
                 </div>
               </section>
 
@@ -65,14 +65,14 @@ function EventoUser() {
                     onChange={(ev) => setNota(ev.target.value)}
                     rows={2}
                     placeholder="Nota per l'ufficio (facoltativa), es. «arrivo alle 19»"
-                    className="w-full rounded-lg border border-border-strong bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
+                    className="w-full border border-border border-b-[1.5px] border-b-gold bg-card px-3 py-2 text-base outline-none focus:border-accent"
                   />
                   <div className="grid grid-cols-2 gap-2">
                     <Button type="button" disabled={answer.isPending || p.stato === "available"} onClick={() => answer.mutate("available")}>
-                      <Check className="h-4 w-4" /> Disponibile
+                      Ci sono
                     </Button>
                     <Button type="button" variant="outline" disabled={answer.isPending || p.stato === "unavailable"} onClick={() => answer.mutate("unavailable")}>
-                      <X className="h-4 w-4" /> Non disponibile
+                      Non posso
                     </Button>
                   </div>
                   {p.stato === "available" && <p className="text-xs text-muted-foreground">Hai dato disponibilità: ora l'ufficio deciderà chi confermare.</p>}
@@ -121,17 +121,23 @@ function EventoUser() {
               )}
 
               {p.is_tl && e.stato !== "annullato" && (
-                <Card className="mt-5 border-accent/50">
-                  <p className="eyebrow text-accent">Sei team leader</p>
+                <Card className="mt-5 border-gold">
+                  <SectionTitle>Team leader</SectionTitle>
                   {e.stato === "chiuso" ? (
                     <p className="mt-1 text-sm text-foreground">Evento chiuso: la bolla ora la può modificare solo l'ufficio.</p>
                   ) : (
                     <p className="mt-1 text-sm text-foreground">Tocca a te compilare la bolla di carico di tutto l'evento: entrata, uscita ed eventuali danni. A fine evento premi «Evento chiuso».</p>
                   )}
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {load_rows.length} voci · entrata {load_rows.filter((r) => r.present).length} · uscita {load_rows.filter((r) => r.returned).length}
+                  <p className="mt-2 flex justify-between">
+                    <span>Bolla di carico</span>
+                    <span className="text-accent">
+                      {load_rows.filter((r) => r.present).length}/{load_rows.length} entrate · {load_rows.filter((r) => r.returned).length} uscite
+                    </span>
                   </p>
-                  <Link to="/u/bolla/$code" params={{ code: e.code }} className="mt-3 flex min-h-12 items-center justify-center gap-2 rounded-lg bg-accent text-sm font-semibold uppercase tracking-[0.08em] text-accent-foreground">
+                  <div className="mt-1.5 h-1.5 bg-line" aria-hidden="true">
+                    <div className="h-full bg-accent" style={{ width: `${load_rows.length ? (load_rows.filter((r) => r.present).length / load_rows.length) * 100 : 0}%` }} />
+                  </div>
+                  <Link to="/u/bolla/$code" params={{ code: e.code }} className="mt-3 flex min-h-12 items-center justify-center gap-2 bg-primary font-display text-[13px] uppercase tracking-[0.16em] text-primary-foreground">
                     <ClipboardCheck className="h-4 w-4" /> {e.stato === "chiuso" ? "Vedi la bolla" : "Apri e compila la bolla"}
                   </Link>
                   {e.stato !== "chiuso" && (
@@ -143,7 +149,7 @@ function EventoUser() {
                         const msg = `Chiudere l'evento?${missing ? ` Attenzione: ${missing} voci risultano entrate ma non uscite.` : ""} Dopo non potrai più modificare la bolla.`;
                         if (window.confirm(msg)) close.mutate();
                       }}
-                      className="mt-3 flex min-h-12 w-full items-center justify-center rounded-lg border border-primary bg-primary text-sm font-semibold uppercase tracking-[0.08em] text-white"
+                      className="mt-3 flex min-h-12 w-full items-center justify-center border border-primary font-display text-[13px] uppercase tracking-[0.16em] text-primary"
                     >
                       Evento chiuso
                     </button>

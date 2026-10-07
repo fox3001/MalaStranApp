@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { AppShell } from "@/components/AppShell";
+import { AppShell, useLogout } from "@/components/AppShell";
 import { CostumeList } from "@/components/CostumeList";
 import { SkillPicker } from "@/components/SkillPicker";
 import { Avatar, Button, Card, ErrorBox, Loading, SectionTitle, TextArea, TextInput } from "@/components/ui-kit";
@@ -11,7 +11,7 @@ export const Route = createFileRoute("/u/profilo")({ component: Profilo });
 function Profilo() {
   const q = useProfile();
   return (
-    <AppShell area="user" title="Il mio profilo" back="/u">
+    <AppShell area="user" eyebrow="Profilo" title="La mia scheda">
       {q.isLoading ? <Loading /> : q.isError || !q.data ? <div className="mt-6"><ErrorBox error={q.error} onRetry={() => void q.refetch()} /></div> : <ProfileForm user={q.data.user} />}
     </AppShell>
   );
@@ -21,6 +21,7 @@ function ProfileForm({ user }: { user: User }) {
   const [form, setForm] = useState(user);
   useEffect(() => setForm(user), [user]);
   const costumes = useMyCostumes();
+  const logout = useLogout("user");
   const save = useApiMutation<Partial<User>>("user", (body) => ({ path: "/profile", method: "PATCH", body }), { success: "Profilo salvato", invalidate: [["profile"]] });
   const addCostume = useApiMutation<{ nome: string; categoria: string; note: string }>("user", (body) => ({ path: "/profile/costumes", method: "POST", body }), { success: "Costume aggiunto", invalidate: [["costumes"]] });
   const delCostume = useApiMutation<number>("user", (id) => ({ path: `/profile/costumes/${id}`, method: "DELETE" }), { invalidate: [["costumes"]] });
@@ -48,15 +49,13 @@ function ProfileForm({ user }: { user: User }) {
   return (
     <>
       <section className="flex items-center gap-4 pt-6">
-        <Avatar name={`${user.nome} ${user.cognome}`} size="md" />
+        <Avatar name={`${user.nome} ${user.cognome}`} size="lg" />
         <div>
-          <h2 className="font-serif text-2xl text-primary">
+          <h2 className="font-display text-[22px] font-bold text-primary">
             {user.nome} {user.cognome}
           </h2>
-          <p className="text-sm text-muted-foreground">
-            Username: <strong className="text-foreground">{user.username}</strong>
-          </p>
-          {user.qualifica && <p className="text-sm text-muted-foreground">{user.qualifica}</p>}
+          {user.qualifica && <p className="text-accent">{user.qualifica}</p>}
+          <p className="text-[15px] italic text-muted-foreground">nome utente: {user.username}</p>
         </div>
       </section>
 
@@ -92,6 +91,10 @@ function ProfileForm({ user }: { user: User }) {
           </Button>
         </form>
       </Card>
+
+      <Button type="button" variant="outline" full className="mt-6" onClick={() => void logout()}>
+        Esci
+      </Button>
     </>
   );
 }

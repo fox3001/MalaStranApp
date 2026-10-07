@@ -16,27 +16,32 @@ export function areaFromPath(pathname: string): Area | null {
   return null;
 }
 
-function safeGet(key: string): string | null {
+function store(kind: "local" | "session"): Storage | null {
   try {
-    return window.localStorage.getItem(key);
+    return kind === "local" ? window.localStorage : window.sessionStorage;
   } catch {
     return null;
   }
 }
-function safeSet(key: string, value: string | null) {
+
+export function getToken(area: Area): string | null {
+  const key = area === "admin" ? ADMIN_TOKEN_KEY : USER_TOKEN_KEY;
   try {
-    if (value === null) window.localStorage.removeItem(key);
-    else window.localStorage.setItem(key, value);
+    return store("local")?.getItem(key) ?? store("session")?.getItem(key) ?? null;
+  } catch {
+    return null;
+  }
+}
+/** remember = false: l'accesso vale solo finché il browser resta aperto ("Ricordami" spento). */
+export function setToken(area: Area, token: string | null, remember = true) {
+  const key = area === "admin" ? ADMIN_TOKEN_KEY : USER_TOKEN_KEY;
+  try {
+    store("local")?.removeItem(key);
+    store("session")?.removeItem(key);
+    if (token !== null) store(remember ? "local" : "session")?.setItem(key, token);
   } catch {
     /* archivio del browser non disponibile */
   }
-}
-
-export function getToken(area: Area): string | null {
-  return safeGet(area === "admin" ? ADMIN_TOKEN_KEY : USER_TOKEN_KEY);
-}
-export function setToken(area: Area, token: string | null) {
-  safeSet(area === "admin" ? ADMIN_TOKEN_KEY : USER_TOKEN_KEY, token);
 }
 
 export class ApiError extends Error {
