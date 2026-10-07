@@ -266,12 +266,25 @@ export interface TavernaMessage {
 }
 /** Taverna: si ricarica ogni 3 secondi, così i messaggi arrivano quasi in diretta. */
 export const useTaverna = (area: Area) =>
-  useQuery<{ messages: TavernaMessage[] }, ApiError>({
+  useQuery<{ messages: TavernaMessage[]; me_name?: string }, ApiError>({
     queryKey: [area, "taverna"],
     queryFn: () => api(area, "/taverna"),
     refetchInterval: 3000,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
+  });
+
+export interface TavernaPerson {
+  id: number | null;
+  role: "admin" | "user";
+  name: string;
+}
+/** Chi si può taggare con @ nella Taverna (user attivi + Admin). */
+export const useTavernaPeople = (area: Area) =>
+  useQuery<{ people: TavernaPerson[] }, ApiError>({
+    queryKey: [area, "taverna", "persone"],
+    queryFn: () => api(area, "/taverna/persone"),
+    staleTime: 60_000,
   });
 
 export const useNotifications = (area: Area) =>
