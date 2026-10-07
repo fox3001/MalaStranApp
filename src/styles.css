@@ -67,18 +67,18 @@
 
   --background: #f3ecdd;      /* pergamena */
   --foreground: #2b211c;      /* inchiostro */
-  --surface: #fbf6ea;
-  --surface-muted: #efe6d2;
-  --card: #fbf6ea;
+  --surface: rgb(251 246 234 / 0.9);
+  --surface-muted: rgb(239 230 210 / 0.9);
+  --card: rgb(251 246 234 / 0.9);   /* riquadri beige al 90%: si intravede lo sfondo */
   --card-foreground: #2b211c;
-  --popover: #fbf6ea;
+  --popover: rgb(251 246 234 / 0.9);
   --popover-foreground: #2b211c;
 
   --primary: #5b1a1e;         /* bordeaux */
   --primary-foreground: #f3ecdd;
-  --secondary: #efe6d2;
+  --secondary: rgb(239 230 210 / 0.9);
   --secondary-foreground: #5b1a1e;
-  --muted: #efe6d2;
+  --muted: rgb(239 230 210 / 0.9);
   --muted-foreground: #6b5a4e;
 
   --accent: #1f5a5e;          /* verde petrolio: colore dell'admin */

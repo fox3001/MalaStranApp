@@ -99,7 +99,7 @@ export function MonthCalendar({ items, legend }: { items: CalendarItem[]; legend
           <span className="h-px flex-1 bg-gold" aria-hidden="true" />
         </div>
         {visible.length === 0 ? (
-          <p className="border border-dashed border-border bg-card/60 px-4 py-3 italic text-muted-foreground">Nessun evento.</p>
+          <p className="border border-dashed border-border bg-card px-4 py-3 italic text-muted-foreground">Nessun evento.</p>
         ) : (
           visible.map((v) => <div key={v.key}>{v.render}</div>)
         )}

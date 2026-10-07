@@ -107,7 +107,7 @@ function AdminHome() {
             {(notes.data?.notifications.length ?? 0) === 0 ? (
               <Empty>Qui compariranno le risposte degli user e le segnalazioni di danni.</Empty>
             ) : (
-              <ul className="border border-line bg-card/95 px-2.5">
+              <ul className="border border-line bg-card px-2.5">
                 {notes.data!.notifications.slice(0, 4).map((n) => (
                   <li key={n.id} className="flex items-start justify-between gap-3 border-b border-line py-2 last:border-b-0">
                     <span className={n.is_read ? "text-muted-foreground" : "text-foreground"}>{n.message}</span>

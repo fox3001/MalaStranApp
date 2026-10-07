@@ -338,7 +338,7 @@ export function ErrorBox({ error, onRetry }: { error: { message: string } | null
 }
 
 export function Empty({ children }: { children: ReactNode }) {
-  return <p className="border border-dashed border-border bg-card/60 px-4 py-3 italic text-muted-foreground">{children}</p>;
+  return <p className="border border-dashed border-border bg-card px-4 py-3 italic text-muted-foreground">{children}</p>;
 }
 
 export function PageTitle({ eyebrow, title, subtitle, action }: { eyebrow: string; title: string; subtitle?: string; action?: ReactNode }) {
