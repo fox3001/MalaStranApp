@@ -21,7 +21,7 @@ export interface AppShellProps {
   headerExtra?: ReactNode;
 }
 
-type IconName = "home" | "shield" | "cal" | "user" | "users";
+type IconName = "home" | "shield" | "cal" | "user" | "users" | "mug";
 const ICONS: Record<IconName, ReactNode> = {
   home: <path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z" />,
   shield: <path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z" />,
@@ -35,6 +35,12 @@ const ICONS: Record<IconName, ReactNode> = {
     <>
       <circle cx="12" cy="9" r="4" />
       <path d="M4 21c1-4 4-6 8-6s7 2 8 6" />
+    </>
+  ),
+  mug: (
+    <>
+      <path d="M5 7h10v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z" />
+      <path d="M15 10h2.5a2 2 0 0 1 0 4H15M5 7c0-2 2-3 3.5-2.2C9.5 3.5 12 3.5 12.8 5 14.5 4.5 15.5 6 15 7" />
     </>
   ),
   users: (
@@ -62,12 +68,14 @@ interface NavItem {
 const USER_NAV: NavItem[] = [
   { to: "/u", label: "Home", icon: "home", exact: true },
   { to: "/u/eventi", label: "Eventi", icon: "shield" },
+  { to: "/u/taverna", label: "Taverna", icon: "mug" },
   { to: "/u/calendario", label: "Calendario", icon: "cal" },
   { to: "/u/profilo", label: "Profilo", icon: "user" },
 ];
 const ADMIN_NAV: NavItem[] = [
   { to: "/admin", label: "Regia", icon: "home", exact: true },
   { to: "/admin/eventi", label: "Eventi", icon: "shield" },
+  { to: "/admin/taverna", label: "Taverna", icon: "mug" },
   { to: "/admin/collaboratori", label: "User", icon: "users" },
   { to: "/admin/calendario", label: "Calendario", icon: "cal" },
 ];
@@ -175,7 +183,7 @@ export function AppShell({ area, title, children, back, eyebrow, below, plainHea
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 to={item.to as any}
                 className={cn(
-                  "flex flex-1 flex-col items-center justify-center gap-[3px] font-display text-[10px] uppercase tracking-[0.12em]",
+                  "flex min-w-0 flex-1 flex-col items-center justify-center gap-[3px] font-display text-[9px] uppercase tracking-[0.08em]",
                   active ? (isAdmin ? "text-accent" : "text-primary") : "text-muted-foreground",
                 )}
               >

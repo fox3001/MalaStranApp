@@ -1,33 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, useLogout } from "@/components/AppShell";
-import { Flock } from "@/components/Flock";
+import { TowerBackdrop } from "@/components/TowerBackdrop";
 import { Empty, ErrorBox, EventRow, Loading, SectionTitle, Stat, Tile } from "@/components/ui-kit";
 import { useAdminEvents, useAdminUsers, useNotifications } from "@/lib/api";
 import { useState } from "react";
 import { timeAgo, timeRange, todayIso } from "@/lib/format";
 
 export const Route = createFileRoute("/admin/")({ component: AdminHome });
-
-/** La torre disegnata a china: sta dietro a tutta la pagina, la punta resta in vista in alto. */
-function TowerBackdrop({ birds }: { birds: number }) {
-  return (
-    <>
-      <img
-        src="/sfondi/torre-regia.svg"
-        alt=""
-        aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-[80px] h-[700px] w-[620px] max-w-none -translate-x-1/2 select-none"
-      />
-      {/* lo stormo vola sopra il disegno ma dietro a tutti i riquadri */}
-      <Flock count={birds} className="absolute inset-x-0 top-[80px] h-[560px]" />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-[320px] h-[700px]"
-        style={{ background: "linear-gradient(to bottom, rgba(243,236,221,0) 0%, rgba(243,236,221,.6) 25%, rgba(243,236,221,.78) 100%)" }}
-      />
-    </>
-  );
-}
 
 /** Tasto dello stormo: una sagoma di user con tre uccellini attorno. Acceso = un condor per ogni user registrato. */
 function FlockButton({ on, count, onToggle }: { on: boolean; count: number; onToggle: () => void }) {

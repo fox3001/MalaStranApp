@@ -15,10 +15,12 @@ import { Route as AdminArchivioRouteImport } from './routes/admin.archivio'
 import { Route as AdminCalendarioRouteImport } from './routes/admin.calendario'
 import { Route as AdminNotificheRouteImport } from './routes/admin.notifiche'
 import { Route as AdminReportRouteImport } from './routes/admin.report'
+import { Route as AdminTavernaRouteImport } from './routes/admin.taverna'
 import { Route as UIndexRouteImport } from './routes/u.index'
 import { Route as UCalendarioRouteImport } from './routes/u.calendario'
 import { Route as UNotificheRouteImport } from './routes/u.notifiche'
 import { Route as UProfiloRouteImport } from './routes/u.profilo'
+import { Route as UTavernaRouteImport } from './routes/u.taverna'
 import { Route as AdminCollaboratoriIndexRouteImport } from './routes/admin.collaboratori.index'
 import { Route as AdminCollaboratoriIdRouteImport } from './routes/admin.collaboratori.$id'
 import { Route as AdminEventiIndexRouteImport } from './routes/admin.eventi.index'
@@ -58,6 +60,11 @@ const AdminReportRoute = AdminReportRouteImport.update({
   path: '/admin/report',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminTavernaRoute = AdminTavernaRouteImport.update({
+  id: '/admin/taverna',
+  path: '/admin/taverna',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UIndexRoute = UIndexRouteImport.update({
   id: '/u/',
   path: '/u/',
@@ -76,6 +83,11 @@ const UNotificheRoute = UNotificheRouteImport.update({
 const UProfiloRoute = UProfiloRouteImport.update({
   id: '/u/profilo',
   path: '/u/profilo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UTavernaRoute = UTavernaRouteImport.update({
+  id: '/u/taverna',
+  path: '/u/taverna',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminCollaboratoriIndexRoute = AdminCollaboratoriIndexRouteImport.update({
@@ -125,9 +137,11 @@ export interface FileRoutesByFullPath {
   '/admin/calendario': typeof AdminCalendarioRoute
   '/admin/notifiche': typeof AdminNotificheRoute
   '/admin/report': typeof AdminReportRoute
+  '/admin/taverna': typeof AdminTavernaRoute
   '/u/calendario': typeof UCalendarioRoute
   '/u/notifiche': typeof UNotificheRoute
   '/u/profilo': typeof UProfiloRoute
+  '/u/taverna': typeof UTavernaRoute
   '/admin/': typeof AdminIndexRoute
   '/u/': typeof UIndexRoute
   '/admin/collaboratori/$id': typeof AdminCollaboratoriIdRoute
@@ -145,9 +159,11 @@ export interface FileRoutesByTo {
   '/admin/calendario': typeof AdminCalendarioRoute
   '/admin/notifiche': typeof AdminNotificheRoute
   '/admin/report': typeof AdminReportRoute
+  '/admin/taverna': typeof AdminTavernaRoute
   '/u/calendario': typeof UCalendarioRoute
   '/u/notifiche': typeof UNotificheRoute
   '/u/profilo': typeof UProfiloRoute
+  '/u/taverna': typeof UTavernaRoute
   '/admin': typeof AdminIndexRoute
   '/u': typeof UIndexRoute
   '/admin/collaboratori/$id': typeof AdminCollaboratoriIdRoute
@@ -166,9 +182,11 @@ export interface FileRoutesById {
   '/admin/calendario': typeof AdminCalendarioRoute
   '/admin/notifiche': typeof AdminNotificheRoute
   '/admin/report': typeof AdminReportRoute
+  '/admin/taverna': typeof AdminTavernaRoute
   '/u/calendario': typeof UCalendarioRoute
   '/u/notifiche': typeof UNotificheRoute
   '/u/profilo': typeof UProfiloRoute
+  '/u/taverna': typeof UTavernaRoute
   '/admin/': typeof AdminIndexRoute
   '/u/': typeof UIndexRoute
   '/admin/collaboratori/$id': typeof AdminCollaboratoriIdRoute
@@ -188,9 +206,11 @@ export interface FileRouteTypes {
     | '/admin/calendario'
     | '/admin/notifiche'
     | '/admin/report'
+    | '/admin/taverna'
     | '/u/calendario'
     | '/u/notifiche'
     | '/u/profilo'
+    | '/u/taverna'
     | '/admin/'
     | '/u/'
     | '/admin/collaboratori/$id'
@@ -208,9 +228,11 @@ export interface FileRouteTypes {
     | '/admin/calendario'
     | '/admin/notifiche'
     | '/admin/report'
+    | '/admin/taverna'
     | '/u/calendario'
     | '/u/notifiche'
     | '/u/profilo'
+    | '/u/taverna'
     | '/admin'
     | '/u'
     | '/admin/collaboratori/$id'
@@ -228,9 +250,11 @@ export interface FileRouteTypes {
     | '/admin/calendario'
     | '/admin/notifiche'
     | '/admin/report'
+    | '/admin/taverna'
     | '/u/calendario'
     | '/u/notifiche'
     | '/u/profilo'
+    | '/u/taverna'
     | '/admin/'
     | '/u/'
     | '/admin/collaboratori/$id'
@@ -249,9 +273,11 @@ export interface RootRouteChildren {
   AdminCalendarioRoute: typeof AdminCalendarioRoute
   AdminNotificheRoute: typeof AdminNotificheRoute
   AdminReportRoute: typeof AdminReportRoute
+  AdminTavernaRoute: typeof AdminTavernaRoute
   UCalendarioRoute: typeof UCalendarioRoute
   UNotificheRoute: typeof UNotificheRoute
   UProfiloRoute: typeof UProfiloRoute
+  UTavernaRoute: typeof UTavernaRoute
   AdminIndexRoute: typeof AdminIndexRoute
   UIndexRoute: typeof UIndexRoute
   AdminCollaboratoriIdRoute: typeof AdminCollaboratoriIdRoute
@@ -308,6 +334,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminReportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/taverna': {
+      id: '/admin/taverna'
+      path: '/admin/taverna'
+      fullPath: '/admin/taverna'
+      preLoaderRoute: typeof AdminTavernaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/u/': {
       id: '/u/'
       path: '/u'
@@ -334,6 +367,13 @@ declare module '@tanstack/react-router' {
       path: '/u/profilo'
       fullPath: '/u/profilo'
       preLoaderRoute: typeof UProfiloRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/u/taverna': {
+      id: '/u/taverna'
+      path: '/u/taverna'
+      fullPath: '/u/taverna'
+      preLoaderRoute: typeof UTavernaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/collaboratori/': {
@@ -401,9 +441,11 @@ const rootRouteChildren: RootRouteChildren = {
   AdminCalendarioRoute: AdminCalendarioRoute,
   AdminNotificheRoute: AdminNotificheRoute,
   AdminReportRoute: AdminReportRoute,
+  AdminTavernaRoute: AdminTavernaRoute,
   UCalendarioRoute: UCalendarioRoute,
   UNotificheRoute: UNotificheRoute,
   UProfiloRoute: UProfiloRoute,
+  UTavernaRoute: UTavernaRoute,
   AdminIndexRoute: AdminIndexRoute,
   UIndexRoute: UIndexRoute,
   AdminCollaboratoriIdRoute: AdminCollaboratoriIdRoute,

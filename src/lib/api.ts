@@ -256,6 +256,24 @@ export const useMyEvent = (code: string) =>
     load_rows: LoadRow[];
   }>("user", ["events", code], `/my/events/${encodeURIComponent(code)}`);
 
+export interface TavernaMessage {
+  id: number;
+  author_role: "admin" | "user";
+  user_id: number | null;
+  author_name: string;
+  testo: string;
+  created_at: string;
+}
+/** Taverna: si ricarica ogni 3 secondi, così i messaggi arrivano quasi in diretta. */
+export const useTaverna = (area: Area) =>
+  useQuery<{ messages: TavernaMessage[] }, ApiError>({
+    queryKey: [area, "taverna"],
+    queryFn: () => api(area, "/taverna"),
+    refetchInterval: 3000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+  });
+
 export const useNotifications = (area: Area) =>
   useApiQuery<{ unread: number; notifications: Notification[] }>(area, ["notifications"], "/notifications");
 
