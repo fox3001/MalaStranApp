@@ -29,7 +29,7 @@ export function LoginScreen({ area, onDone }: { area: Area; onDone: () => void }
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-5 py-10">
-      <ArcaneCircle className="left-1/2 top-[8%] h-[540px] w-[540px] -translate-x-1/2" />
+      <ArcaneCircle spin className="left-1/2 top-[8%] h-[540px] w-[540px] -translate-x-1/2" />
       <form onSubmit={enter} className="relative w-full max-w-sm">
         <img src="/malastrana-logo.png" alt="MalaStranApp" width={250} height={222} className="mx-auto mb-7 h-auto w-[250px]" />
         {area === "admin" && <p className="mb-3 text-center font-display text-[11px] uppercase tracking-[0.3em] text-accent">Ufficio & regia</p>}

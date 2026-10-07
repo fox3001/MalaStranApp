@@ -37,17 +37,21 @@ export function Wordmark({ small }: { small?: boolean }) {
   );
 }
 
-/** Cerchio alchemico chiaro con "Eventi senza tempo" che gira attorno. Va dentro un contenitore "relative". */
-export function ArcaneCircle({ className }: { className?: string }) {
+/**
+ * Cerchio alchemico chiaro con "Eventi senza tempo" che gira attorno. Va dentro un contenitore "relative".
+ * spin = ruota piano piano su sé stesso, all'infinito (un giro ogni 4 minuti).
+ */
+export function ArcaneCircle({ className, spin }: { className?: string; spin?: boolean }) {
   return (
-    <svg
-      viewBox="0 0 400 400"
-      aria-hidden="true"
-      fill="none"
-      stroke="#5B1A1E"
-      className={cn("pointer-events-none absolute opacity-[0.17]", className)}
-      dangerouslySetInnerHTML={{ __html: ARCANE_CIRCLE }}
-    />
+    <div aria-hidden="true" className={cn("pointer-events-none absolute opacity-[0.17]", className)}>
+      <svg
+        viewBox="0 0 400 400"
+        fill="none"
+        stroke="#5B1A1E"
+        className={cn("h-full w-full", spin && "arcane-spin")}
+        dangerouslySetInnerHTML={{ __html: ARCANE_CIRCLE }}
+      />
+    </div>
   );
 }
 
