@@ -235,10 +235,10 @@ html {
   animation-timing-function: linear;
   animation-iteration-count: infinite;
 }
-.arcane-cw-240 { animation-name: arcane-cw; animation-duration: 240s; }
-.arcane-ccw-180 { animation-name: arcane-ccw; animation-duration: 180s; }
-.arcane-cw-150 { animation-name: arcane-cw; animation-duration: 150s; }
-.arcane-ccw-120 { animation-name: arcane-ccw; animation-duration: 120s; }
+.arcane-cw-240 { animation-name: arcane-cw; animation-duration: 200s; }
+.arcane-ccw-180 { animation-name: arcane-ccw; animation-duration: 150s; }
+.arcane-cw-150 { animation-name: arcane-cw; animation-duration: 125s; }
+.arcane-ccw-120 { animation-name: arcane-ccw; animation-duration: 100s; }
 @media (prefers-reduced-motion: reduce) {
   .arcane-cw-240,
   .arcane-ccw-180,
