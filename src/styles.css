@@ -247,3 +247,28 @@ html {
     animation: none;
   }
 }
+
+/* Stormo sulla Torre di regia: ali che sbattono e leggero ondeggiare */
+@keyframes flock-flap {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(-0.55); }
+}
+@keyframes flock-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.flock-wing {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation-name: flock-flap;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+.flock-bob {
+  animation-name: flock-bob;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .flock-wing, .flock-bob { animation: none; }
+}
