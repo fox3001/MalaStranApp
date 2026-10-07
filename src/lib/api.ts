@@ -230,7 +230,7 @@ export function useApiQuery<T>(area: Area, key: QueryKey, path: string, enabled 
 
 export const useAdminUsers = () => useApiQuery<{ users: User[] }>("admin", ["users"], "/admin/users");
 export const useAdminUser = (id: string) =>
-  useApiQuery<{ user: User; costumes: Costume[]; events: Array<{ code: string; nome: string; data: string; stato: ParticipantStatus; stato_evento: EventStatus }> }>(
+  useApiQuery<{ user: User; password: string | null; costumes: Costume[]; events: Array<{ code: string; nome: string; data: string; stato: ParticipantStatus; stato_evento: EventStatus }> }>(
     "admin",
     ["users", id],
     `/admin/users/${id}`,

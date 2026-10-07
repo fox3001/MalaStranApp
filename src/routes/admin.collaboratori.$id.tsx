@@ -23,20 +23,20 @@ function SchedaUser() {
           <ErrorBox error={q.error} onRetry={() => void q.refetch()} />
         </div>
       ) : (
-        <Scheda id={id} user={q.data.user} costumes={q.data.costumes} events={q.data.events} />
+        <Scheda id={id} user={q.data.user} password={q.data.password ?? null} costumes={q.data.costumes} events={q.data.events} />
       )}
     </AppShell>
   );
 }
 
-function Scheda({ id, user, costumes, events }: { id: string; user: User; costumes: NonNullable<ReturnType<typeof useAdminUser>["data"]>["costumes"]; events: NonNullable<ReturnType<typeof useAdminUser>["data"]>["events"] }) {
+function Scheda({ id, user, password, costumes, events }: { id: string; user: User; password: string | null; costumes: NonNullable<ReturnType<typeof useAdminUser>["data"]>["costumes"]; events: NonNullable<ReturnType<typeof useAdminUser>["data"]>["events"] }) {
   const router = useRouter();
   const [form, setForm] = useState(user);
   const [pwd, setPwd] = useState("");
   useEffect(() => setForm(user), [user]);
 
   const save = useApiMutation<Partial<User>>("admin", (body) => ({ path: `/admin/users/${id}`, method: "PATCH", body }), { success: "Scheda salvata", invalidate: [["users"]] });
-  const setPassword = useApiMutation<string>("admin", (password) => ({ path: `/admin/users/${id}/password`, method: "PATCH", body: { password } }), { success: "Password aggiornata" });
+  const setPassword = useApiMutation<string>("admin", (password) => ({ path: `/admin/users/${id}/password`, method: "PATCH", body: { password } }), { success: "Password aggiornata", invalidate: [["users"]] });
   const remove = useApiMutation<void>("admin", () => ({ path: `/admin/users/${id}`, method: "DELETE" }), { success: "User eliminato", invalidate: [["users"], ["events"]] });
   const addCostume = useApiMutation<{ nome: string; categoria: string; note: string }>("admin", (body) => ({ path: `/admin/users/${id}/costumes`, method: "POST", body }), { success: "Costume aggiunto", invalidate: [["users"]] });
   const delCostume = useApiMutation<number>("admin", (cid) => ({ path: `/admin/users/${id}/costumes/${cid}`, method: "DELETE" }), { invalidate: [["users"]] });
@@ -120,6 +120,17 @@ function Scheda({ id, user, costumes, events }: { id: string; user: User; costum
 
       <Card className="mt-6 grid gap-3">
         <SectionTitle>Accesso</SectionTitle>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <TextInput label="Nome utente" value={user.username} readOnly />
+          {password ? (
+            <TextInput label="Password attuale" type="password" value={password} readOnly autoComplete="off" />
+          ) : (
+            <div>
+              <span className="block font-display text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Password attuale</span>
+              <p className="mt-1 text-sm italic text-muted-foreground">Non disponibile: è stata creata prima di questa funzione. Impostane una nuova qui sotto e da lì in poi la vedrai.</p>
+            </div>
+          )}
+        </div>
         <form
           className="flex items-end gap-2"
           onSubmit={(e) => {
