@@ -215,18 +215,35 @@ html {
     radial-gradient(circle at 80% 85%, rgb(230 220 198 / 0.5) 0%, transparent 55%);
 }
 
-/* Rotazione lentissima del cerchio alchemico nella pagina di accesso */
-@keyframes arcane-spin {
+/* Cerchio alchemico dell'accesso: anelli concentrici che girano in sensi opposti, clessidra ferma */
+@keyframes arcane-cw {
   to {
     transform: rotate(360deg);
   }
 }
-.arcane-spin {
-  transform-origin: 50% 50%;
-  animation: arcane-spin 240s linear infinite;
+@keyframes arcane-ccw {
+  to {
+    transform: rotate(-360deg);
+  }
 }
+.arcane-cw-240,
+.arcane-ccw-180,
+.arcane-cw-150,
+.arcane-ccw-120 {
+  transform-box: view-box;
+  transform-origin: 200px 200px;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.arcane-cw-240 { animation-name: arcane-cw; animation-duration: 240s; }
+.arcane-ccw-180 { animation-name: arcane-ccw; animation-duration: 180s; }
+.arcane-cw-150 { animation-name: arcane-cw; animation-duration: 150s; }
+.arcane-ccw-120 { animation-name: arcane-ccw; animation-duration: 120s; }
 @media (prefers-reduced-motion: reduce) {
-  .arcane-spin {
+  .arcane-cw-240,
+  .arcane-ccw-180,
+  .arcane-cw-150,
+  .arcane-ccw-120 {
     animation: none;
   }
 }

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import type { EventStatus, ParticipantStatus } from "@/lib/api";
 import { EVENT_STATUS_LABEL, PARTICIPANT_LABEL, dayNumber, monthShort } from "@/lib/format";
 import { Sigillo } from "@/components/Sigillo";
-import { ARCANE_CIRCLE } from "@/components/arcane-circle";
+import { ARCANE_PARTS } from "@/components/arcane-circle";
 
 /* ------------------------------------------------------------------ */
 /* Marchio                                                             */
@@ -39,18 +39,18 @@ export function Wordmark({ small }: { small?: boolean }) {
 
 /**
  * Cerchio alchemico chiaro con "Eventi senza tempo" che gira attorno. Va dentro un contenitore "relative".
- * spin = ruota piano piano su sé stesso, all'infinito (un giro ogni 4 minuti).
+ * spin = gli anelli girano piano, uno in un senso e il successivo nell'altro; la clessidra al centro resta ferma.
  */
+const SPIN: Record<string, string> = { ring: "arcane-cw-240", star: "arcane-ccw-180", inner: "arcane-cw-150", square: "arcane-ccw-120", center: "" };
+
 export function ArcaneCircle({ className, spin }: { className?: string; spin?: boolean }) {
   return (
     <div aria-hidden="true" className={cn("pointer-events-none absolute opacity-[0.17]", className)}>
-      <svg
-        viewBox="0 0 400 400"
-        fill="none"
-        stroke="#5B1A1E"
-        className={cn("h-full w-full", spin && "arcane-spin")}
-        dangerouslySetInnerHTML={{ __html: ARCANE_CIRCLE }}
-      />
+      <svg viewBox="0 0 400 400" fill="none" stroke="#5B1A1E" className="h-full w-full">
+        {Object.entries(ARCANE_PARTS).map(([k, markup]) => (
+          <g key={k} className={spin ? SPIN[k] : undefined} dangerouslySetInnerHTML={{ __html: markup }} />
+        ))}
+      </svg>
     </div>
   );
 }
