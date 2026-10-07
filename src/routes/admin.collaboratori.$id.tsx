@@ -121,20 +121,22 @@ function Scheda({ id, user, costumes, events }: { id: string; user: User; costum
       <Card className="mt-6 grid gap-3">
         <SectionTitle>Accesso</SectionTitle>
         <form
-          className="flex gap-2"
+          className="flex items-end gap-2"
           onSubmit={(e) => {
             e.preventDefault();
             setPassword.mutate(pwd, { onSuccess: () => setPwd("") });
           }}
         >
-          <input
+          <TextInput
+            label="Nuova password"
+            type="password"
             value={pwd}
             onChange={(e) => setPwd(e.target.value)}
             minLength={6}
             required
-            placeholder="Nuova password (min 6)"
+            placeholder="almeno 6 caratteri"
             autoComplete="new-password"
-            className="min-h-11 flex-1 rounded-lg border border-border-strong bg-surface px-3 text-sm outline-none focus:border-accent"
+            className="flex-1"
           />
           <Button type="submit" variant="outline" disabled={setPassword.isPending}>
             Cambia

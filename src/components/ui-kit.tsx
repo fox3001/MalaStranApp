@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { EventStatus, ParticipantStatus } from "@/lib/api";
 import { EVENT_STATUS_LABEL, PARTICIPANT_LABEL, dayNumber, monthShort } from "@/lib/format";
@@ -361,11 +361,33 @@ export function PageTitle({ eyebrow, title, subtitle, action }: { eyebrow: strin
 const inputClass =
   "mt-1 min-h-11 w-full border border-border border-b-[1.5px] border-b-gold bg-card px-3 text-[17px] text-foreground outline-none placeholder:italic placeholder:text-muted-foreground/80 focus:border-accent";
 
-export function TextInput({ label, hint, className, ...rest }: React.InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string }) {
+export function TextInput({ label, hint, className, type, ...rest }: React.InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string }) {
+  const [show, setShow] = useState(false);
+  const isPwd = type === "password";
   return (
     <label className={cn("block", className)}>
       <span className="eyebrow text-accent">{label}</span>
-      <input {...rest} className={inputClass} />
+      {isPwd ? (
+        <span className="relative block">
+          <input {...rest} type={show ? "text" : "password"} className={cn(inputClass, "pr-12")} />
+          {/* occhietto: mostra o nasconde la password scritta */}
+          <button
+            type="button"
+            onClick={() => setShow((s) => !s)}
+            aria-label={show ? "Nascondi password" : "Mostra password"}
+            aria-pressed={show}
+            className="absolute right-0 top-1 flex h-11 w-11 items-center justify-center text-accent"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className="h-5 w-5" aria-hidden="true">
+              <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
+              <circle cx="12" cy="12" r="3" />
+              {show && <path d="M4 4l16 16" />}
+            </svg>
+          </button>
+        </span>
+      ) : (
+        <input {...rest} type={type} className={inputClass} />
+      )}
       {hint && <span className="mt-1 block text-[14px] italic text-muted-foreground">{hint}</span>}
     </label>
   );

@@ -133,7 +133,7 @@ function NewUserForm({ onCreated }: { onCreated: () => void }) {
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <TextInput label="Username" name="username" autoComplete="off" autoCapitalize="none" pattern="[A-Za-z0-9._\-]{3,40}" hint="Se lo lasci vuoto diventa nome.cognome. Senza spazi." />
-          <TextInput label="Password *" name="password" required minLength={6} autoComplete="new-password" hint="Almeno 6 caratteri. Comunicala tu allo user." />
+          <TextInput label="Password *" name="password" type="password" required minLength={6} autoComplete="new-password" hint="Almeno 6 caratteri. Comunicala tu allo user." />
         </div>
         <TextInput label="Qualifica" name="qualifica" placeholder="es. Attrice e performer" />
         <div className="grid gap-3 sm:grid-cols-2">
