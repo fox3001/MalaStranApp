@@ -1,8 +1,8 @@
 import { Link, useLocation, useRouter } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { api, getToken, setToken, useNotifications } from "@/lib/api";
+import { api, getToken, setToken, useNotifications, type TavernaMessage } from "@/lib/api";
 
 export interface AppShellProps {
   area: "admin" | "user";
@@ -80,6 +80,17 @@ const ADMIN_NAV: NavItem[] = [
   { to: "/admin/calendario", label: "Calendario", icon: "cal" },
 ];
 
+/** Quanti messaggi ci sono ora in Taverna (si ricontrolla ogni 20 secondi). */
+function useTavernaCount(area: "admin" | "user") {
+  const q = useQuery<{ messages: TavernaMessage[] }>({
+    queryKey: [area, "taverna"],
+    queryFn: () => api(area, "/taverna"),
+    refetchInterval: 20000,
+    enabled: !!getToken(area),
+  });
+  return q.data?.messages.length ?? 0;
+}
+
 export function useLogout(area: "admin" | "user") {
   const router = useRouter();
   const qc = useQueryClient();
@@ -141,6 +152,7 @@ export function AppShell({ area, title, children, back, eyebrow, below, plainHea
   const location = useLocation();
   const isAdmin = area === "admin";
   const navItems = isAdmin ? ADMIN_NAV : USER_NAV;
+  const tavernaCount = useTavernaCount(area);
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-background">
@@ -188,7 +200,20 @@ export function AppShell({ area, title, children, back, eyebrow, below, plainHea
                   active ? (isAdmin ? "text-accent" : "text-primary") : "text-muted-foreground",
                 )}
               >
-                <NavIcon name={item.icon} />
+                <span className="relative">
+                  <NavIcon name={item.icon} />
+                  {item.icon === "mug" && tavernaCount > 0 && (
+                    <span
+                      aria-label={`${tavernaCount} messaggi`}
+                      className={cn(
+                        "absolute -right-3 -top-2 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border border-white px-1 font-sans text-[10px] font-bold normal-case tracking-normal text-white",
+                        isAdmin ? "bg-accent" : "bg-primary",
+                      )}
+                    >
+                      {tavernaCount > 99 ? "99+" : tavernaCount}
+                    </span>
+                  )}
+                </span>
                 {item.label}
               </Link>
             );
