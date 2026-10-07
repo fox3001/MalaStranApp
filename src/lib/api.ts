@@ -98,7 +98,15 @@ export interface User {
   competenze: string[];
   competenzeFlag: string[];
   costumi?: string[];
+  /** giorni in cui non c'è (da oggi in poi) */
+  assenze?: Assenza[];
   created_at: string;
+}
+
+export interface Assenza {
+  id?: number;
+  dal: string;
+  al: string;
 }
 
 export interface Costume {
@@ -230,7 +238,7 @@ export function useApiQuery<T>(area: Area, key: QueryKey, path: string, enabled 
 
 export const useAdminUsers = () => useApiQuery<{ users: User[] }>("admin", ["users"], "/admin/users");
 export const useAdminUser = (id: string) =>
-  useApiQuery<{ user: User; password: string | null; costumes: Costume[]; events: Array<{ code: string; nome: string; data: string; stato: ParticipantStatus; stato_evento: EventStatus }> }>(
+  useApiQuery<{ user: User; password: string | null; assenze?: Assenza[]; costumes: Costume[]; events: Array<{ code: string; nome: string; data: string; stato: ParticipantStatus; stato_evento: EventStatus }> }>(
     "admin",
     ["users", id],
     `/admin/users/${id}`,
@@ -246,6 +254,7 @@ export const useReport = (code: string, onlyIssues: boolean) =>
   );
 
 export const useProfile = () => useApiQuery<{ user: User }>("user", ["profile"], "/profile");
+export const useMyAssenze = () => useApiQuery<{ assenze: Assenza[] }>("user", ["assenze"], "/profile/assenze");
 export const useMyCostumes = () => useApiQuery<{ costumes: Costume[] }>("user", ["costumes"], "/profile/costumes");
 export const useMyEvents = () => useApiQuery<{ events: MyEvent[] }>("user", ["events"], "/my/events");
 export const useMyEvent = (code: string) =>

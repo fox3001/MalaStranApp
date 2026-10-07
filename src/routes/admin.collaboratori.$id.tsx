@@ -2,10 +2,11 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { Trash2 } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { AppShell } from "@/components/AppShell";
+import { AssenzeList } from "@/components/AssenzeList";
 import { CostumeList } from "@/components/CostumeList";
 import { SkillPicker } from "@/components/SkillPicker";
 import { Avatar, Button, Card, ErrorBox, Loading, ParticipantTag, SectionTitle, TextArea, TextInput } from "@/components/ui-kit";
-import { useAdminUser, useApiMutation, type User } from "@/lib/api";
+import { useAdminUser, useApiMutation, type Assenza, type User } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 
 export const Route = createFileRoute("/admin/collaboratori/$id")({ component: SchedaUser });
@@ -23,13 +24,13 @@ function SchedaUser() {
           <ErrorBox error={q.error} onRetry={() => void q.refetch()} />
         </div>
       ) : (
-        <Scheda id={id} user={q.data.user} password={q.data.password ?? null} costumes={q.data.costumes} events={q.data.events} />
+        <Scheda id={id} user={q.data.user} password={q.data.password ?? null} assenze={q.data.assenze ?? []} costumes={q.data.costumes} events={q.data.events} />
       )}
     </AppShell>
   );
 }
 
-function Scheda({ id, user, password, costumes, events }: { id: string; user: User; password: string | null; costumes: NonNullable<ReturnType<typeof useAdminUser>["data"]>["costumes"]; events: NonNullable<ReturnType<typeof useAdminUser>["data"]>["events"] }) {
+function Scheda({ id, user, password, assenze, costumes, events }: { id: string; user: User; password: string | null; assenze: Assenza[]; costumes: NonNullable<ReturnType<typeof useAdminUser>["data"]>["costumes"]; events: NonNullable<ReturnType<typeof useAdminUser>["data"]>["events"] }) {
   const router = useRouter();
   const [form, setForm] = useState(user);
   const [pwd, setPwd] = useState("");
@@ -91,6 +92,11 @@ function Scheda({ id, user, password, costumes, events }: { id: string; user: Us
           {save.isPending ? "Salvataggio…" : "Salva scheda"}
         </Button>
       </form>
+
+      <Card className="mt-6">
+        <SectionTitle>Giorni in cui non c'è</SectionTitle>
+        <AssenzeList assenze={assenze} readOnly empty="Non ha segnato giorni in cui non c'è." />
+      </Card>
 
       <Card className="mt-6">
         <SectionTitle>Costumi personali</SectionTitle>

@@ -70,3 +70,21 @@ export const SKILL_SUGGESTIONS = [
   "Giocoliere", "Trampoli", "Trucco", "Horror", "Medievale", "Pirata", "Magia", "Danza", "Canto", "Musicista",
   "Cosplayer", "Public speaking", "Gestione pubblico", "Bambini", "Tecnico", "Luci", "Audio", "Allestimenti", "Autista",
 ];
+
+/** "14 nov", "21–23 nov", "30 nov – 2 dic" (con l'anno solo se non è quello in corso) */
+export function formatAssenza(dal: string, al: string): string {
+  const a = parse(dal);
+  const b = parse(al);
+  if (!a || !b) return dal;
+  const y = new Date().getFullYear();
+  const mon = (d: Date) => (MONTHS[d.getMonth()] ?? "").slice(0, 3);
+  const year = (d: Date) => (d.getFullYear() !== y ? ` ${d.getFullYear()}` : "");
+  if (dal === al) return `${a.getDate()} ${mon(a)}${year(a)}`;
+  if (a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear()) return `${a.getDate()}–${b.getDate()} ${mon(b)}${year(b)}`;
+  return `${a.getDate()} ${mon(a)}${a.getFullYear() !== b.getFullYear() ? year(a) : ""} – ${b.getDate()} ${mon(b)}${year(b)}`;
+}
+
+/** true se il giorno "iso" cade in uno dei periodi */
+export function isAway(iso: string, assenze: Array<{ dal: string; al: string }> | undefined): boolean {
+  return !!assenze?.some((x) => x.dal <= iso && iso <= x.al);
+}

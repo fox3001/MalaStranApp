@@ -7,7 +7,7 @@ import { BollaImport, type ImportRow } from "@/components/BollaImport";
 import { EventForm } from "@/components/EventForm";
 import { Button, Card, ErrorBox, Field, Loading, ParticipantTag, SectionTitle, StatusTag } from "@/components/ui-kit";
 import { downloadText, groupRows, useAdminEvent, useAdminUsers, useApiMutation, useResoconto, type LoadRow, type MalEvent, type Participant, type ParticipantStatus } from "@/lib/api";
-import { PARTICIPANT_LABEL, formatDate, formatDateLong, timeRange } from "@/lib/format";
+import { PARTICIPANT_LABEL, formatDate, formatDateLong, isAway, timeRange } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/eventi/$code")({ component: EventoAdmin });
@@ -55,7 +55,7 @@ function EventoAdmin() {
 
           <div className="mt-5">
             {tab === "info" && <InfoTab event={q.data.event} />}
-            {tab === "persone" && <PeopleTab code={code} participants={q.data.participants} />}
+            {tab === "persone" && <PeopleTab code={code} date={q.data.event.data} participants={q.data.participants} />}
             {tab === "resoconto" && <ResocontoTab code={code} />}
             {tab === "bolla" && <BollaTab code={code} rows={q.data.load_rows} participants={q.data.participants} closed={q.data.event.stato === "chiuso"} />}
           </div>
@@ -135,7 +135,7 @@ function InfoTab({ event }: { event: MalEvent }) {
 
 const ORDER: ParticipantStatus[] = ["available", "confirmed", "pending", "unavailable", "rejected"];
 
-function PeopleTab({ code, participants }: { code: string; participants: Participant[] }) {
+function PeopleTab({ code, date, participants }: { code: string; date: string; participants: Participant[] }) {
   const users = useAdminUsers();
   const [picking, setPicking] = useState(false);
   const [selected, setSelected] = useState<number[]>([]);
@@ -187,6 +187,9 @@ function PeopleTab({ code, participants }: { code: string; participants: Partici
                     {p.nome} {p.cognome}
                   </span>
                   <span className="block truncate text-xs text-muted-foreground">{p.ruolo_evento || p.qualifica || `@${p.username}`}</span>
+                  {isAway(date, users.data?.users.find((u) => u.id === p.user_id)?.assenze) && (
+                    <span className="mt-0.5 inline-block bg-primary px-1.5 py-px font-display text-[10px] uppercase tracking-[0.1em] text-white">Ha segnato che non c'è</span>
+                  )}
                 </Link>
                 <span className="flex flex-col items-end gap-1">
                   <ParticipantTag status={p.stato} />
@@ -255,6 +258,9 @@ function PeopleTab({ code, participants }: { code: string; participants: Partici
                       <span className="block">
                         {u.nome} {u.cognome}
                       </span>
+                      {isAway(date, u.assenze) && (
+                        <span className="mt-0.5 inline-block bg-primary px-1.5 py-px font-display text-[10px] uppercase tracking-[0.1em] text-white">Non c'è quel giorno</span>
+                      )}
                       {u.competenze.length > 0 && <span className="block truncate text-xs text-muted-foreground">{u.competenze.join(", ")}</span>}
                     </span>
                   </label>

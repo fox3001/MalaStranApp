@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { AppShell, useLogout } from "@/components/AppShell";
+import { AssenzeList } from "@/components/AssenzeList";
 import { CostumeList } from "@/components/CostumeList";
 import { SkillPicker } from "@/components/SkillPicker";
 import { Avatar, Button, Card, ErrorBox, Loading, SectionTitle, TextArea, TextInput } from "@/components/ui-kit";
-import { useApiMutation, useMyCostumes, useProfile, type User } from "@/lib/api";
+import { useApiMutation, useMyAssenze, useMyCostumes, useProfile, type User } from "@/lib/api";
 
 export const Route = createFileRoute("/u/profilo")({ component: Profilo });
 
@@ -25,6 +26,9 @@ function ProfileForm({ user }: { user: User }) {
   const save = useApiMutation<Partial<User>>("user", (body) => ({ path: "/profile", method: "PATCH", body }), { success: "Profilo salvato", invalidate: [["profile"]] });
   const addCostume = useApiMutation<{ nome: string; categoria: string; note: string }>("user", (body) => ({ path: "/profile/costumes", method: "POST", body }), { success: "Costume aggiunto", invalidate: [["costumes"]] });
   const delCostume = useApiMutation<number>("user", (id) => ({ path: `/profile/costumes/${id}`, method: "DELETE" }), { invalidate: [["costumes"]] });
+  const assenze = useMyAssenze();
+  const addAssenza = useApiMutation<{ dal: string; al: string }>("user", (body) => ({ path: "/profile/assenze", method: "POST", body }), { success: "Giorni segnati", invalidate: [["assenze"]] });
+  const delAssenza = useApiMutation<number>("user", (id) => ({ path: `/profile/assenze/${id}`, method: "DELETE" }), { invalidate: [["assenze"]] });
   const changePwd = useApiMutation<{ attuale: string; nuova: string }>("user", (body) => ({ path: "/profile/password", method: "POST", body }), { success: "Password cambiata" });
 
   const set = (k: keyof User) => (e: { target: { value: string } }) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -78,6 +82,16 @@ function ProfileForm({ user }: { user: User }) {
       <Card className="mt-6">
         <SectionTitle>I miei costumi</SectionTitle>
         {costumes.isLoading ? <Loading /> : <CostumeList costumes={costumes.data?.costumes ?? []} onAdd={(c) => addCostume.mutate(c)} onDelete={(id) => delCostume.mutate(id)} adding={addCostume.isPending} />}
+      </Card>
+
+      <Card className="mt-6">
+        <SectionTitle>I giorni in cui non ci sei</SectionTitle>
+        <p className="mb-3 text-[15px] italic text-muted-foreground">Segna i giorni in cui sai già di non poter lavorare: l'admin li vede quando chiama.</p>
+        {assenze.isLoading ? (
+          <Loading />
+        ) : (
+          <AssenzeList assenze={assenze.data?.assenze ?? []} onAdd={(a) => addAssenza.mutate(a)} onDelete={(id) => delAssenza.mutate(id)} adding={addAssenza.isPending} />
+        )}
       </Card>
 
       <Card className="mt-6">
