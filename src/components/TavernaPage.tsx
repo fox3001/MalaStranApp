@@ -21,6 +21,13 @@ export function TavernaPage({ area }: { area: Area }) {
   const list = useRef<HTMLDivElement>(null);
   const messages = q.data?.messages ?? [];
   const lastId = messages[messages.length - 1]?.id ?? 0;
+  // un condor per ogni persona diversa che ha scritto nelle ultime 12 ore
+  const since = Date.now() - 12 * 3600 * 1000;
+  const writers = new Set(
+    messages
+      .filter((m) => new Date(m.created_at.replace(" ", "T") + "Z").getTime() >= since)
+      .map((m) => (m.author_role === "admin" ? "admin" : `u${m.user_id}`)),
+  ).size;
 
   // quando arriva un messaggio nuovo si scende in fondo
   useEffect(() => {
@@ -45,7 +52,7 @@ export function TavernaPage({ area }: { area: Area }) {
   }
 
   return (
-    <AppShell area={area} eyebrow="Per tutti · user e admin" title="Taverna" backdrop={<TowerBackdrop />}>
+    <AppShell area={area} eyebrow="Per tutti · user e admin" title="Taverna" backdrop={<TowerBackdrop birds={writers} />}>
       <div className="h-[262px]" aria-hidden="true" />
       <section className="relative flex h-[calc(100dvh-76px-262px-112px)] min-h-[360px] flex-col border border-gold bg-card">
         <div className="flex items-center justify-between gap-2 border-b border-gold px-3 py-1.5">
