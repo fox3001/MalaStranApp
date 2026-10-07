@@ -70,10 +70,11 @@ export function Flock({ className, count = 20 }: { className?: string; count?: n
           c.angle += c.speed * dt;
           c.wobble += c.wobbleSpeed * dt;
           // ogni tanto un uccello allarga molto il giro, poi rientra
-          if (c.wideTarget === 0 && Math.random() < dt * 0.025) c.wideTarget = rand(90, 190);
+          if (c.wideTarget === 0 && Math.random() < dt * 0.025) c.wideTarget = rand(50, 120);
           else if (c.wideTarget > 0 && Math.random() < dt * 0.12) c.wideTarget = 0;
           c.wide += (c.wideTarget - c.wide) * Math.min(1, dt * 0.6);
-          const rx = c.rx * (0.75 + 0.35 * Math.sin(c.wobble)) + c.wide;
+          // il giro non supera mai i bordi: restano sempre dentro lo schermo
+          const rx = Math.min(c.rx * (0.75 + 0.35 * Math.sin(c.wobble)) + c.wide, cx - c.size - 6);
           const ry = rx * 0.22;
           const depth = Math.sin(c.angle); // >0 davanti alla torre, <0 dietro
           const x = cx + Math.cos(c.angle) * rx - c.size / 2;
