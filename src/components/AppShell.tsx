@@ -17,6 +17,8 @@ export interface AppShellProps {
   plainHeader?: boolean;
   /** sfondi decorativi dietro al contenuto */
   backdrop?: ReactNode;
+  /** pulsanti in più nella testata, accanto alla campanella */
+  headerExtra?: ReactNode;
 }
 
 type IconName = "home" | "shield" | "cal" | "user" | "users";
@@ -127,7 +129,7 @@ function BackButton({ to, light }: { to: string; light?: boolean }) {
   );
 }
 
-export function AppShell({ area, title, children, back, eyebrow, below, plainHeader, backdrop }: AppShellProps) {
+export function AppShell({ area, title, children, back, eyebrow, below, plainHeader, backdrop, headerExtra }: AppShellProps) {
   const location = useLocation();
   const isAdmin = area === "admin";
   const navItems = isAdmin ? ADMIN_NAV : USER_NAV;
@@ -143,6 +145,7 @@ export function AppShell({ area, title, children, back, eyebrow, below, plainHea
               <p className="font-display text-[10px] uppercase tracking-[0.3em] text-white/85">{eyebrow ?? "Ufficio & regia"}</p>
               <h1 className="truncate font-display text-[21px] font-bold leading-tight tracking-[0.04em] text-white">{title}</h1>
             </div>
+            {headerExtra}
             <BellButton area="admin" light />
           </div>
         </header>

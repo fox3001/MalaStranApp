@@ -29,6 +29,34 @@ function TowerBackdrop({ birds }: { birds: number }) {
   );
 }
 
+/** Tasto dello stormo: una sagoma di user con tre uccellini attorno. Acceso = un condor per ogni user registrato. */
+function FlockButton({ on, count, onToggle }: { on: boolean; count: number; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={on}
+      aria-label={on ? `Stormo: ${count} condor, uno per ogni user. Tocca per tornare a 20` : "Mostra un condor per ogni user registrato"}
+      className={"relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-gold-light " + (on ? "bg-white text-accent" : "text-white")}
+    >
+      <svg viewBox="0 0 24 24" className="h-7 w-7" aria-hidden="true">
+        {/* user: testa e corpo */}
+        <circle cx="12" cy="12.2" r="3" fill="currentColor" />
+        <path d="M6.6 22c.6-3.8 2.7-5.6 5.4-5.6s4.8 1.8 5.4 5.6z" fill="currentColor" />
+        {/* tre uccellini fermi attorno */}
+        <path d="M1.2 7.4 q1.7-1.6 3.4 0 q1.7-1.6 3.4 0 q-1.7-.5-3.4 1.3 q-1.7-1.8-3.4-1.3z" fill="currentColor" />
+        <path d="M14.8 3.6 q1.7-1.6 3.4 0 q1.7-1.6 3.4 0 q-1.7-.5-3.4 1.3 q-1.7-1.8-3.4-1.3z" fill="currentColor" />
+        <path d="M16.6 11 q1.4-1.3 2.8 0 q1.4-1.3 2.8 0 q-1.4-.4-2.8 1.1 q-1.4-1.5-2.8-1.1z" fill="currentColor" />
+      </svg>
+      {on && (
+        <span className="absolute left-1/2 top-full mt-0.5 -translate-x-1/2 whitespace-nowrap font-display text-[10px] leading-none tracking-[0.1em] text-white">
+          {count} user
+        </span>
+      )}
+    </button>
+  );
+}
+
 const ico = (d: React.ReactNode) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.3} className="h-[26px] w-[26px]" aria-hidden="true">
     {d}
@@ -50,24 +78,13 @@ function AdminHome() {
   const damages = list.reduce((n, e) => n + (e.conteggi?.danni ?? 0), 0);
 
   return (
-    <AppShell area="admin" title="Torre di regia" backdrop={<TowerBackdrop birds={showUsers ? userCount : 20} />}>
-      <div className="relative h-[262px]">
-        {/* tasto dello stormo: 20 uccelli oppure tanti quanti gli user registrati */}
-        <button
-          type="button"
-          onClick={() => setShowUsers((v) => !v)}
-          aria-pressed={showUsers}
-          className={
-            "absolute left-0 top-3 flex min-h-9 items-center gap-1.5 border px-2.5 font-display text-[10px] uppercase tracking-[0.14em] " +
-            (showUsers ? "border-accent bg-accent text-white" : "border-gold bg-card text-accent")
-          }
-        >
-          <svg viewBox="0 0 20 12" className="h-3 w-5" aria-hidden="true">
-            <path d="M0,2 Q5,-1 10,6 Q15,-1 20,2 Q15,3 10,9 Q5,3 0,2Z" fill="currentColor" />
-          </svg>
-          {showUsers ? `${userCount} user` : "Stormo = user"}
-        </button>
-      </div>
+    <AppShell
+      area="admin"
+      title="Torre di regia"
+      backdrop={<TowerBackdrop birds={showUsers ? userCount : 20} />}
+      headerExtra={<FlockButton on={showUsers} count={userCount} onToggle={() => setShowUsers((v) => !v)} />}
+    >
+      <div className="h-[262px]" aria-hidden="true" />
 
       {events.isLoading ? (
         <Loading />
