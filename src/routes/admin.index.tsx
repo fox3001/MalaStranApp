@@ -49,8 +49,8 @@ function FlockButton({ on, count, onToggle }: { on: boolean; count: number; onTo
         <path d="M16.6 11 q1.4-1.3 2.8 0 q1.4-1.3 2.8 0 q-1.4-.4-2.8 1.1 q-1.4-1.5-2.8-1.1z" fill="currentColor" />
       </svg>
       {on && (
-        <span className="absolute left-1/2 top-full mt-0.5 -translate-x-1/2 whitespace-nowrap font-display text-[10px] leading-none tracking-[0.1em] text-white">
-          {count} user
+        <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border border-accent bg-white px-1 font-sans text-[10px] font-bold text-accent">
+          {count > 99 ? "99+" : count}
         </span>
       )}
     </button>
