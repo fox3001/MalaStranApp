@@ -299,13 +299,16 @@ export function Stat({ value, label, tone = "primary", to }: { value: ReactNode;
   return to ? <Link to={to as any} className={cls}>{inner}</Link> : <div className={cls}>{inner}</div>;
 }
 
-export function Tile({ to, icon, label, tone = "primary", tall }: { to: string; icon: ReactNode; label: string; tone?: "primary" | "accent"; tall?: boolean }) {
-  const bg = tone === "primary" ? "bg-primary [box-shadow:inset_0_0_0_4px_var(--color-primary),inset_0_0_0_5px_var(--color-gold)]" : "bg-accent [box-shadow:inset_0_0_0_4px_var(--color-accent),inset_0_0_0_5px_var(--color-gold)]";
+export function Tile({ to, icon, label, tone = "primary", tall, translucent }: { to: string; icon: ReactNode; label: string; tone?: "primary" | "accent"; tall?: boolean; translucent?: boolean }) {
+  // translucent: il riquadro è al 90% e lascia intravedere lo sfondo; scritte e icona restano piene
+  const solid = tone === "primary" ? "#5B1A1E" : "#1F5A5E";
+  const fill = translucent ? (tone === "primary" ? "rgba(91,26,30,.9)" : "rgba(31,90,94,.9)") : solid;
   return (
     <Link
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       to={to as any}
-      className={cn("relative flex flex-col items-center justify-center gap-1.5 text-primary-foreground active:opacity-90", bg, tall ? "h-[104px]" : "h-[84px]")}
+      style={{ background: fill, boxShadow: `inset 0 0 0 4px ${fill}, inset 0 0 0 5px #A8874A` }}
+      className={cn("relative flex flex-col items-center justify-center gap-1.5 text-primary-foreground active:opacity-90", tall ? "h-[104px]" : "h-[84px]")}
     >
       <span className="text-gold-light">{icon}</span>
       <span className="font-display text-[11px] uppercase tracking-[0.14em]">{label}</span>

@@ -57,7 +57,7 @@ function UserHome() {
             <Link
               to="/u/eventi/$code"
               params={{ code: next.code }}
-              className="relative mt-[18px] flex items-center gap-3.5 border border-gold bg-card/85 px-4 py-3.5"
+              className="relative mt-[18px] flex items-center gap-3.5 border border-gold bg-card/90 px-4 py-3.5"
             >
               <ShieldDate date={next.data} tone={next.mio_stato === "pending" ? "primary" : "accent"} />
               <span className="min-w-0 flex-1">
@@ -71,7 +71,7 @@ function UserHome() {
               </span>
             </Link>
           ) : (
-            <p className="relative mt-[18px] border border-dashed border-border bg-card/70 px-4 py-3 text-center italic text-muted-foreground">Nessun evento in programma per ora.</p>
+            <p className="relative mt-[18px] border border-dashed border-border bg-card/90 px-4 py-3 text-center italic text-muted-foreground">Nessun evento in programma per ora.</p>
           )}
           {toAnswer.length > 1 && (
             <p className="relative mt-2 text-center text-[15px] italic text-primary">
@@ -83,6 +83,7 @@ function UserHome() {
             <Tile
               to="/u/eventi"
               tall
+              translucent
               label="I miei eventi"
               icon={
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.3} className="h-8 w-8" aria-hidden="true">
@@ -93,6 +94,7 @@ function UserHome() {
             <Tile
               to="/u/profilo"
               tall
+              translucent
               tone="accent"
               label="La mia scheda"
               icon={
