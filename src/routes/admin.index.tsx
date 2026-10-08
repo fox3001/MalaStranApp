@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, useLogout } from "@/components/AppShell";
 import { FlockButton, TowerBackdrop } from "@/components/TowerBackdrop";
 import { ShoutIcon } from "@/components/ShoutIcon";
+import { FaiReportButton } from "@/components/ReportMese";
 import { Empty, ErrorBox, EventRow, Loading, SectionTitle, Stat, Tile } from "@/components/ui-kit";
 import { useAdminEvents, useAdminUsers, useNotifications } from "@/lib/api";
 import { useState } from "react";
@@ -27,7 +28,7 @@ function AdminHome() {
   const today = todayIso();
   const upcoming = list.filter((e) => e.data >= today && e.stato !== "annullato" && e.stato !== "chiuso");
   const waiting = upcoming.reduce((n, e) => n + (e.conteggi?.in_attesa ?? 0), 0);
-  const damages = list.reduce((n, e) => n + (e.conteggi?.danni ?? 0), 0);
+  const damages = list.reduce((n, e) => n + (e.conteggi?.danni ?? 0) + (e.conteggi?.persi ?? 0), 0);
 
   return (
     <AppShell
@@ -137,6 +138,7 @@ function AdminHome() {
                 )}
               />
             </nav>
+            <FaiReportButton className="mt-2.5" />
             <button type="button" onClick={() => void logout()} className="mx-auto mt-5 block font-display text-[11px] uppercase tracking-[0.18em] text-muted-foreground underline underline-offset-4">
               Esci
             </button>

@@ -327,7 +327,7 @@ function BollaTab({ code, rows, participants, closed }: { code: string; rows: Lo
     );
   }
 
-  const issues = rows.filter((r) => r.damaged || r.comment).length;
+  const issues = rows.filter((r) => r.damaged || r.lost || r.comment).length;
   const input = "min-h-11 w-full border border-border border-b-[1.5px] border-b-gold bg-card px-3 text-[16px] outline-none focus:border-accent";
 
   return (
@@ -341,7 +341,7 @@ function BollaTab({ code, rows, participants, closed }: { code: string; rows: Lo
         </div>
       )}
       <p className="-mt-2 text-xs text-muted-foreground">
-        <strong>Prep</strong> = preparato in magazzino (lo spunti tu). <strong>Entrata</strong> e <strong>Uscita</strong> = le spunte del team leader all'inizio e alla fine dell'evento.
+        <strong>Prep</strong> = preparato in magazzino (lo spunti tu). <strong>Entrata</strong> e <strong>Uscita</strong> = le spunte del team leader all'inizio e alla fine dell'evento. <strong>Danni</strong> = rovinato, <strong>Perso</strong> = non si trova più.
       </p>
 
       {groups.length > 1 && (
@@ -363,26 +363,26 @@ function BollaTab({ code, rows, participants, closed }: { code: string; rows: Lo
         groups.map(([cat, list]) => {
           const isOpen = open[cat] ?? true;
           const done = list.filter((r) => r.returned).length;
-          const warn = list.some((r) => r.damaged || r.comment);
+          const warn = list.some((r) => r.damaged || r.lost || r.comment);
           return (
             <section key={cat} className="border border-gold bg-card">
               <button type="button" onClick={() => setOpen((o) => ({ ...o, [cat]: !isOpen }))} className="block w-full text-left" aria-expanded={isOpen}>
                 {isOpen ? (
-                  <LedgerHead title={cat} count={list.length} columns={["Prep", "Entrata", "Uscita", "Danni"]} />
+                  <LedgerHead title={cat} count={list.length} columns={["Prep", "Entr.", "Usc.", "Danni", "Perso"]} col={44} />
                 ) : (
                   <span className="flex items-center justify-between gap-2 px-3.5 py-2.5">
                     <span className="min-w-0 truncate font-display text-[12px] uppercase tracking-[0.1em] text-primary">{cat}</span>
                     <span className="shrink-0 text-sm italic text-muted-foreground">
                       {done}/{list.length}
-                      {warn && <span className="text-primary"> · danni</span>} ▾
+                      {warn && <span className="text-primary"> · danni/persi</span>} ▾
                     </span>
                   </span>
                 )}
               </button>
               {isOpen &&
                 list.map((r) => (
-                  <div key={r.id} className={cn("border-b border-line last:border-b-0", r.damaged && "bg-danger-soft")}>
-                    <div className="grid min-h-[50px] items-center px-3.5 py-1" style={{ gridTemplateColumns: "minmax(0,1fr) repeat(4, 52px)" }}>
+                  <div key={r.id} className={cn("border-b border-line last:border-b-0", (r.damaged || r.lost) && "bg-danger-soft")}>
+                    <div className="grid min-h-[50px] items-center px-3.5 py-1" style={{ gridTemplateColumns: "minmax(0,1fr) repeat(5, 44px)" }}>
                       <span className="flex min-w-0 items-start gap-1 pr-1">
                         <span className="min-w-0 text-[16px] leading-tight">
                           {r.quantita > 1 && `${r.quantita}× `}
@@ -399,6 +399,7 @@ function BollaTab({ code, rows, participants, closed }: { code: string; rows: Lo
                       <RoundCheck label="Entrata" disabled={closed} on={r.present} onClick={() => patch.mutate({ id: r.id, present: !r.present })} />
                       <RoundCheck label="Uscita" disabled={closed} on={r.returned} onClick={() => patch.mutate({ id: r.id, returned: !r.returned })} />
                       <RoundCheck label="Danni" disabled={closed} on={r.damaged} danger onClick={() => patch.mutate({ id: r.id, damaged: !r.damaged })} />
+                      <RoundCheck label="Perso" disabled={closed} on={r.lost} lost onClick={() => patch.mutate({ id: r.id, lost: !r.lost })} />
                     </div>
                     {(r.comment || closed || r.annotazione) && (
                       <div className="px-3.5 pb-2.5">
@@ -550,10 +551,11 @@ function ResocontoTab({ code }: { code: string }) {
         </Button>
       </Card>
 
-      <div className="grid grid-cols-3 gap-2 text-center">
+      <div className="grid grid-cols-4 gap-2 text-center">
         <Counter label="Confermati" value={`${s.persone.confermati}/${s.persone.invitati}`} />
         <Counter label="Uscite" value={`${s.bolla.rientrati}/${s.bolla.oggetti}`} warn={s.bolla.non_rientrati > 0} />
         <Counter label="Danni" value={String(s.bolla.danneggiati)} warn={s.bolla.danneggiati > 0} />
+        <Counter label="Persi" value={String(s.bolla.persi ?? 0)} warn={(s.bolla.persi ?? 0) > 0} />
       </div>
 
       <Card>
@@ -567,6 +569,7 @@ function ResocontoTab({ code }: { code: string }) {
                 <span className="font-medium">{r.item}</span> {r.note && <span className="text-muted-foreground">· {r.note}</span>}
                 <span className="mt-0.5 block text-xs">
                   {r.damaged && <span className="mr-2 font-semibold text-destructive">Danneggiato</span>}
+                  {r.lost && <span className="mr-2 font-semibold text-destructive">Perso</span>}
                   {r.present && !r.returned && <span className="mr-2 font-semibold text-warning-foreground">Entrata senza uscita</span>}
                   {r.comment && <span className="text-foreground">“{r.comment}”</span>}
                 </span>

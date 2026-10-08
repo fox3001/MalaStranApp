@@ -1,7 +1,8 @@
 import { cn } from "@/lib/utils";
 
 /** Pulsante tondo della bolla: petrolio con ✓ per Entrata/Uscita/Prep, bordeaux con ! per Danni. */
-export function RoundCheck({ label, on, onClick, danger, disabled }: { label: string; on: boolean; onClick: () => void; danger?: boolean; disabled?: boolean }) {
+export function RoundCheck({ label, on, onClick, danger, lost, disabled }: { label: string; on: boolean; onClick: () => void; danger?: boolean; lost?: boolean; disabled?: boolean }) {
+  if (lost) danger = true;
   return (
     <button
       type="button"
@@ -18,7 +19,7 @@ export function RoundCheck({ label, on, onClick, danger, disabled }: { label: st
     >
       {on && (
         <svg viewBox="0 0 24 24" fill="none" stroke="#F3ECDD" strokeWidth={2.4} className="h-4 w-4" aria-hidden="true">
-          {danger ? <path d="M12 6v8M12 18h.01" /> : <path d="M5 12l5 5 9-10" />}
+          {lost ? <path d="M7 7l10 10M17 7L7 17" /> : danger ? <path d="M12 6v8M12 18h.01" /> : <path d="M5 12l5 5 9-10" />}
         </svg>
       )}
     </button>
@@ -26,7 +27,7 @@ export function RoundCheck({ label, on, onClick, danger, disabled }: { label: st
 }
 
 /** Intestazione del gruppo della bolla (fascia bordeaux) + nomi delle colonne. */
-export function LedgerHead({ title, count, columns }: { title: string; count: number; columns: string[] }) {
+export function LedgerHead({ title, count, columns, col = 52 }: { title: string; count: number; columns: string[]; col?: number }) {
   return (
     <>
       <div className="flex items-center justify-between bg-primary px-3.5 py-2.5 text-primary-foreground">
@@ -35,7 +36,7 @@ export function LedgerHead({ title, count, columns }: { title: string; count: nu
       </div>
       <div
         className="grid border-b border-border px-3.5 py-1.5 font-display text-[9px] uppercase tracking-[0.12em] text-muted-foreground"
-        style={{ gridTemplateColumns: `minmax(0,1fr) repeat(${columns.length}, 52px)` }}
+        style={{ gridTemplateColumns: `minmax(0,1fr) repeat(${columns.length}, ${col}px)` }}
       >
         <span>Voce</span>
         {columns.map((c) => (

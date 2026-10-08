@@ -142,7 +142,7 @@ export interface MalEvent {
   chiuso_at?: string;
   stato: EventStatus;
   motivo_annullamento: string;
-  conteggi?: { invitati: number; in_attesa: number; disponibili: number; confermati: number; righe_bolla: number; danni: number };
+  conteggi?: { invitati: number; in_attesa: number; disponibili: number; confermati: number; righe_bolla: number; danni: number; persi?: number };
 }
 
 export interface Participant {
@@ -172,6 +172,8 @@ export interface LoadRow {
   present: boolean;
   returned: boolean;
   damaged: boolean;
+  /** oggetto perso */
+  lost: boolean;
   prep: boolean;
   annotazione: string;
   note: string;
@@ -297,6 +299,14 @@ export const useTavernaPeople = (area: Area) =>
     staleTime: 60_000,
   });
 
+export interface MonthlyReport {
+  id: number;
+  mese: string;
+  quando: string;
+  scade_il: string;
+}
+export const useMonthlyReports = () => useApiQuery<{ reports: MonthlyReport[] }>("admin", ["report-mensili"], "/admin/report-mensili");
+
 export interface Shout {
   id: number;
   testo: string;
@@ -340,7 +350,7 @@ export interface Resoconto {
   event: MalEvent;
   summary: {
     persone: { invitati: number; confermati: number; disponibili_non_confermati: number; non_disponibili: number; senza_risposta: number; non_selezionati: number };
-    bolla: { oggetti: number; presenti: number; rientrati: number; danneggiati: number; mai_segnati_presenti: number; non_rientrati: number };
+    bolla: { oggetti: number; presenti: number; rientrati: number; danneggiati: number; persi?: number; mai_segnati_presenti: number; non_rientrati: number };
   };
   people: Array<{ stato: ParticipantStatus; ruolo_evento: string | null; nota_user: string | null; nome: string; cognome: string }>;
   problemi: LoadRow[];

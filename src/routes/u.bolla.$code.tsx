@@ -39,7 +39,7 @@ function BollaUser() {
             )}
           </div>
           <p className="mb-3 text-[15px] italic text-muted-foreground">
-            Entrata: quando arrivi e hai l'oggetto. Uscita: a fine serata, quando lo rimetti a posto. Se è rovinato tocca Danni e scrivi cosa è successo.
+            Entrata: quando arrivi e hai l'oggetto. Uscita: a fine serata, quando lo rimetti a posto. Se è rovinato tocca Danni, se non lo trovi più tocca Perso, e scrivi cosa è successo.
           </p>
           {ev.stato === "chiuso" && <p className="mb-3 border border-primary bg-danger-soft px-3 py-2 text-primary">Evento chiuso: la bolla ora si può solo guardare.</p>}
           <section className="grid gap-3">
@@ -50,7 +50,7 @@ function BollaUser() {
             ) : (
               groupRows(rows).map(([cat, list]) => (
                 <div key={cat} className="border border-gold bg-card">
-                  <LedgerHead title={cat} count={list.length} columns={["Entrata", "Uscita", "Danni"]} />
+                  <LedgerHead title={cat} count={list.length} columns={["Entrata", "Uscita", "Danni", "Perso"]} col={48} />
                   {list.map((r) => (
                     <Row key={r.id} row={r} locked={ev.stato === "chiuso"} />
                   ))}
@@ -67,15 +67,15 @@ function BollaUser() {
 function Row({ row, locked }: { row: LoadRow; locked: boolean }) {
   const [comment, setComment] = useState(row.comment);
   useEffect(() => setComment(row.comment), [row.comment]);
-  const save = useApiMutation<Partial<Pick<LoadRow, "present" | "returned" | "damaged" | "comment">>>("user", (body) => ({ path: `/my/load-rows/${row.id}`, method: "PATCH", body }), {
+  const save = useApiMutation<Partial<Pick<LoadRow, "present" | "returned" | "damaged" | "lost" | "comment">>>("user", (body) => ({ path: `/my/load-rows/${row.id}`, method: "PATCH", body }), {
     invalidate: [["events"]],
   });
   const busy = locked || save.isPending;
-  const showBox = row.damaged || !!row.comment;
+  const showBox = row.damaged || row.lost || !!row.comment;
 
   return (
     <>
-      <div className={cn("grid min-h-[50px] items-center border-b border-line px-3.5 py-1", row.damaged && "bg-danger-soft")} style={{ gridTemplateColumns: "minmax(0,1fr) repeat(3, 52px)" }}>
+      <div className={cn("grid min-h-[50px] items-center border-b border-line px-3.5 py-1", (row.damaged || row.lost) && "bg-danger-soft")} style={{ gridTemplateColumns: "minmax(0,1fr) repeat(4, 48px)" }}>
         <span className="pr-1.5 text-[17px] leading-tight">
           {row.quantita > 1 && `${row.quantita}× `}
           {row.item}
@@ -84,6 +84,7 @@ function Row({ row, locked }: { row: LoadRow; locked: boolean }) {
         <RoundCheck label="Entrata" on={row.present} disabled={busy} onClick={() => save.mutate({ present: !row.present })} />
         <RoundCheck label="Uscita" on={row.returned} disabled={busy} onClick={() => save.mutate({ returned: !row.returned })} />
         <RoundCheck label="Danni" danger on={row.damaged} disabled={busy} onClick={() => save.mutate({ damaged: !row.damaged })} />
+        <RoundCheck label="Perso" lost on={row.lost} disabled={busy} onClick={() => save.mutate({ lost: !row.lost })} />
       </div>
       {showBox && (
         <div className="border-b border-line bg-danger-soft px-3.5 pb-3 pt-2">
@@ -96,7 +97,7 @@ function Row({ row, locked }: { row: LoadRow; locked: boolean }) {
             value={comment}
             disabled={locked}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Es. pizzo strappato sulla manica"
+            placeholder={row.lost && !row.damaged ? "Es. non trovato a fine serata, forse rimasto in camerino" : "Es. pizzo strappato sulla manica"}
             className="mt-1 w-full border border-primary bg-card px-2.5 py-2 text-base outline-none"
           />
           <div className="mt-1 flex items-center justify-between gap-2">

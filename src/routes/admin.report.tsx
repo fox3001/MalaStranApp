@@ -45,7 +45,7 @@ function Report() {
         ) : (
           <ul className="overflow-hidden rounded-xl border border-border bg-card shadow-[var(--shadow-card)]">
             {rows.map((r) => (
-              <li key={r.id} className={cn("border-b border-border px-4 py-3 last:border-b-0", r.damaged && "bg-destructive/5")}>
+              <li key={r.id} className={cn("border-b border-border px-4 py-3 last:border-b-0", (r.damaged || r.lost) && "bg-destructive/5")}>
                 <Link to="/admin/eventi/$code" params={{ code: r.event_code }} className="eyebrow text-accent">
                   {formatDate(r.event_data)} · {r.event_nome}
                 </Link>
@@ -56,7 +56,9 @@ function Report() {
                 </p>
                 <p className="mt-1 text-xs">
                   <Mark on={r.prep}>Prep</Mark> · <Mark on={r.present}>Entrata</Mark> · <Mark on={r.returned}>Uscita</Mark> ·{" "}
-                  <span className={r.damaged ? "font-semibold text-destructive" : "text-muted-foreground"}>{r.damaged ? "DANNEGGIATO" : "nessun danno"}</span>
+                  <span className={r.damaged || r.lost ? "font-semibold text-destructive" : "text-muted-foreground"}>
+                    {[r.damaged ? "DANNEGGIATO" : "", r.lost ? "PERSO" : ""].filter(Boolean).join(" + ") || "nessun danno"}
+                  </span>
                 </p>
                 {r.comment && <p className="mt-1.5 rounded-md bg-muted px-2 py-1.5 text-xs">“{r.comment}”</p>}
               </li>
@@ -73,10 +75,10 @@ function Mark({ on, children }: { on: boolean; children: string }) {
 }
 
 function downloadCsv(rows: ReportRow[]) {
-  const head = ["Data", "Evento", "Codice evento", "Sezione/gruppo", "Nome", "Quantità", "Note", "Prep", "Entrata", "Uscita", "Danni", "Commento"];
+  const head = ["Data", "Evento", "Codice evento", "Sezione/gruppo", "Nome", "Quantità", "Note", "Prep", "Entrata", "Uscita", "Danni", "Perso", "Commento"];
   const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const lines = rows.map((r) =>
-    [r.event_data, r.event_nome, r.event_code, r.categoria, r.item, r.quantita, r.note, r.prep ? "sì" : "no", r.present ? "sì" : "no", r.returned ? "sì" : "no", r.damaged ? "sì" : "no", r.comment].map(esc).join(";"),
+    [r.event_data, r.event_nome, r.event_code, r.categoria, r.item, r.quantita, r.note, r.prep ? "sì" : "no", r.present ? "sì" : "no", r.returned ? "sì" : "no", r.damaged ? "sì" : "no", r.lost ? "sì" : "no", r.comment].map(esc).join(";"),
   );
   const blob = new Blob(["﻿" + [head.map(esc).join(";"), ...lines].join("\n")], { type: "text/csv;charset=utf-8" });
   const a = document.createElement("a");
