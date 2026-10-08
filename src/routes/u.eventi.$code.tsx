@@ -3,6 +3,7 @@ import { ClipboardCheck, Phone } from "lucide-react";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { PresenzaBox } from "@/components/PresenzaBox";
+import { RuoloBox, ruoloSuggestions } from "@/components/RuoloBox";
 import { Button, Card, ErrorBox, Field, Loading, ParticipantTag, SectionTitle, ShieldDate, StatusTag } from "@/components/ui-kit";
 import { useApiMutation, useMyEvent } from "@/lib/api";
 import { formatDateLong, timeRange } from "@/lib/format";
@@ -18,6 +19,11 @@ function EventoUser() {
     success: "Risposta inviata all'ufficio",
     invalidate: [["events"]],
   });
+  const setRuolo = useApiMutation<{ userId: number; ruolo_evento: string }>(
+    "user",
+    ({ userId, ruolo_evento }) => ({ path: `/my/events/${encodeURIComponent(code)}/team/${userId}`, method: "PATCH", body: { ruolo_evento } }),
+    { success: "Ruolo salvato", invalidate: [["events"]] },
+  );
 
   return (
     <AppShell area="user" eyebrow={q.data ? `Evento${q.data.event.tipo ? " · " + q.data.event.tipo : ""}` : "Evento"} title={q.data?.event.nome ?? "Evento"} back="/u/eventi">
@@ -31,6 +37,7 @@ function EventoUser() {
         (() => {
           const { event: e, partecipazione: p, team, load_rows } = q.data;
           const closed = e.stato === "annullato" || e.stato === "chiuso";
+          const ruoli = ruoloSuggestions(load_rows.map((r) => r.categoria));
           const canAnswer = !closed && (p.stato === "pending" || p.stato === "available" || p.stato === "unavailable");
           return (
             <>
@@ -38,10 +45,19 @@ function EventoUser() {
                 <ShieldDate date={e.data} tone={closed ? "muted" : p.stato === "confirmed" ? "accent" : "primary"} size="lg" />
                 <div className="min-w-0">
                   <p className="font-display text-[10px] uppercase tracking-[0.2em] text-accent">{formatDateLong(e.data)}</p>
-                  <p className="text-[22px] font-semibold leading-tight">{p.is_tl ? "Sei team leader" : p.ruolo_evento || e.nome}</p>
-                  <div className="mt-1">{closed ? <StatusTag status={e.stato} /> : <ParticipantTag status={p.stato} />}</div>
+                  <p className="text-[22px] font-semibold leading-tight">{e.nome}</p>
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    {closed ? <StatusTag status={e.stato} /> : <ParticipantTag status={p.stato} />}
+                    {p.is_tl && <span className="bg-primary px-2 py-0.5 font-display text-[10px] uppercase tracking-[0.1em] text-white">Team leader</span>}
+                  </div>
                 </div>
               </section>
+
+              {p.stato === "confirmed" && (
+                <div className="mt-4">
+                  <RuoloBox big value={p.ruolo_evento} />
+                </div>
+              )}
 
               {e.stato === "annullato" && (
                 <Card className="mt-5 border-destructive/40">
@@ -54,7 +70,6 @@ function EventoUser() {
                 <Field label="Orario">{timeRange(e.ora_inizio, e.ora_fine)}</Field>
                 <Field label="Luogo">{e.luogo || "Da definire"}</Field>
                 {e.tipo && <Field label="Tipo">{e.tipo}</Field>}
-                {p.ruolo_evento && <Field label="Il tuo ruolo">{p.ruolo_evento}</Field>}
                 {e.descrizione && <Field label="Descrizione">{e.descrizione}</Field>}
               </Card>
 
@@ -109,11 +124,21 @@ function EventoUser() {
                   {team.length > 0 && (
                     <Card className="mt-5">
                       <SectionTitle>Squadra confermata</SectionTitle>
+                      {p.is_tl && <p className="mb-2 text-[14px] italic text-muted-foreground">Sei team leader: puoi scrivere il ruolo di ognuno.</p>}
                       <ul>
-                        {team.map((t, i) => (
-                          <li key={i} className="border-b border-border py-2 text-sm last:border-b-0">
-                            {t.nome} {t.cognome}
-                            {t.ruolo_evento && <span className="text-muted-foreground"> · {t.ruolo_evento}</span>}
+                        {team.map((t) => (
+                          <li key={t.user_id} className="border-b border-border py-2.5 last:border-b-0">
+                            <span className="mb-1.5 block text-[16px]">
+                              {t.nome} {t.cognome}
+                              {t.is_tl ? <span className="ml-1.5 font-display text-[10px] uppercase tracking-[0.1em] text-primary">· team leader</span> : null}
+                            </span>
+                            <RuoloBox
+                              value={t.ruolo_evento ?? ""}
+                              editable={p.is_tl && !closed}
+                              suggestions={ruoli}
+                              saving={setRuolo.isPending}
+                              onSave={(r) => setRuolo.mutate({ userId: t.user_id, ruolo_evento: r })}
+                            />
                           </li>
                         ))}
                       </ul>

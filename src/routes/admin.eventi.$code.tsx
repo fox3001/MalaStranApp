@@ -10,6 +10,7 @@ import { downloadText, groupRows, useAdminEvent, useAdminUsers, useApiMutation, 
 import { PARTICIPANT_LABEL, formatDate, formatDateLong, isAway, timeRange } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { InvitePicker } from "@/components/InvitePicker";
+import { RuoloBox, ruoloSuggestions } from "@/components/RuoloBox";
 
 export const Route = createFileRoute("/admin/eventi/$code")({ component: EventoAdmin });
 
@@ -56,7 +57,7 @@ function EventoAdmin() {
 
           <div className="mt-5">
             {tab === "info" && <InfoTab event={q.data.event} />}
-            {tab === "persone" && <PeopleTab code={code} date={q.data.event.data} participants={q.data.participants} />}
+            {tab === "persone" && <PeopleTab code={code} date={q.data.event.data} participants={q.data.participants} ruoli={ruoloSuggestions(q.data.load_rows.map((r) => r.categoria))} />}
             {tab === "resoconto" && <ResocontoTab code={code} />}
             {tab === "bolla" && <BollaTab code={code} rows={q.data.load_rows} participants={q.data.participants} closed={q.data.event.stato === "chiuso"} />}
           </div>
@@ -136,7 +137,7 @@ function InfoTab({ event }: { event: MalEvent }) {
 
 const ORDER: ParticipantStatus[] = ["available", "confirmed", "pending", "unavailable", "rejected"];
 
-function PeopleTab({ code, date, participants }: { code: string; date: string; participants: Participant[] }) {
+function PeopleTab({ code, date, participants, ruoli }: { code: string; date: string; participants: Participant[]; ruoli: string[] }) {
   const users = useAdminUsers();
   const [picking, setPicking] = useState(false);
   const [selected, setSelected] = useState<number[]>([]);
@@ -182,7 +183,7 @@ function PeopleTab({ code, date, participants }: { code: string; date: string; p
                   <span className="block truncate font-serif text-base text-foreground">
                     {p.nome} {p.cognome}
                   </span>
-                  <span className="block truncate text-xs text-muted-foreground">{p.ruolo_evento || p.qualifica || `@${p.username}`}</span>
+                  <span className="block truncate text-xs text-muted-foreground">{p.qualifica || `@${p.username}`}</span>
                   {isAway(date, users.data?.users.find((u) => u.id === p.user_id)?.assenze) && (
                     <span className="mt-0.5 inline-block bg-primary px-1.5 py-px font-display text-[10px] uppercase tracking-[0.1em] text-white">Ha segnato che non c'è</span>
                   )}
@@ -214,20 +215,17 @@ function PeopleTab({ code, date, participants }: { code: string; date: string; p
                 <SmallBtn onClick={() => decide.mutate({ userId: p.user_id, is_tl: !p.is_tl })}>{p.is_tl ? "Togli team leader" : "Rendi team leader"}</SmallBtn>
                 <SmallBtn
                   onClick={() => {
-                    const r = window.prompt("Ruolo in questo evento (es. Capitano, Strega, Accoglienza):", p.ruolo_evento ?? "");
-                    if (r !== null) decide.mutate({ userId: p.user_id, ruolo_evento: r });
-                  }}
-                >
-                  Ruolo
-                </SmallBtn>
-                <SmallBtn
-                  onClick={() => {
                     if (window.confirm(`Togliere ${p.nome} ${p.cognome} da questo evento?`)) removeP.mutate(p.user_id);
                   }}
                 >
                   Togli
                 </SmallBtn>
               </div>
+              {p.stato === "confirmed" && (
+                <div className="mt-2.5">
+                  <RuoloBox value={p.ruolo_evento ?? ""} editable suggestions={ruoli} saving={decide.isPending} onSave={(r) => decide.mutate({ userId: p.user_id, ruolo_evento: r })} />
+                </div>
+              )}
             </li>
           ))}
         </ul>

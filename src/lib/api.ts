@@ -270,7 +270,7 @@ export const useMyEvent = (code: string) =>
   useApiQuery<{
     event: MyEvent;
     partecipazione: { stato: ParticipantStatus; ruolo_evento: string; nota_user: string; nota_admin: string; is_tl: boolean };
-    team: Array<{ nome: string; cognome: string; ruolo_evento: string | null }>;
+    team: Array<{ user_id: number; nome: string; cognome: string; ruolo_evento: string | null; is_tl: number }>;
     load_rows: LoadRow[];
   }>("user", ["events", code], `/my/events/${encodeURIComponent(code)}`);
 
