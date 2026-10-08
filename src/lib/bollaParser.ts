@@ -117,19 +117,26 @@ export function parseBollaPdf(pages: PdfTextItem[][]): ParsedRow[] {
   let section = "";
   let lastGroup = "";
 
+  // posizione delle colonne: se una pagina non ha l'intestazione, vale quella della pagina prima
+  let geo: { nameLeft: number; prepX: number; checksRight: number; noteRight: number } | null = null;
+
   for (const items of pages) {
     const header = items.find((i) => norm(i.str) === "nome");
     const prep = items.find((i) => norm(i.str) === "prep");
-    const noteH = items.find((i) => norm(i.str) === "note");
-    if (!header || !noteH) continue;
-    const nameCenter = header.x + header.w / 2;
-    const prepX = prep ? prep.x : nameCenter + 60;
-    const nameLeft = nameCenter - (prepX - nameCenter);
-    const checks = items.filter((i) => /^(check|animatore|entrata|uscita)$/.test(norm(i.str)));
-    const checksRight = checks.length ? Math.max(...checks.map((c) => c.x + c.w)) : prepX + 70;
-    const noteCenter = noteH.x + noteH.w / 2;
-    const noteRight = noteCenter + (noteCenter - checksRight) - 2;
-    const headerBottom = Math.min(header.y, ...checks.map((c) => c.y)) - 2;
+    // "NOTE", "NOTE/ROTTO/PERSO", "NOTE:"...
+    const noteH = items.find((i) => /^note\b/.test(norm(i.str)));
+    let headerBottom = Number.POSITIVE_INFINITY;
+    if (header && noteH) {
+      const nameCenter = header.x + header.w / 2;
+      const prepX = prep ? prep.x : nameCenter + 60;
+      const checks = items.filter((i) => /^(check|animatore|entrata|uscita|rientro|pre-?|post-?|mag|evento|anim\.?)$/.test(norm(i.str)));
+      const checksRight = checks.length ? Math.max(...checks.map((c) => c.x + c.w)) : prepX + 70;
+      const noteCenter = noteH.x + noteH.w / 2;
+      geo = { nameLeft: nameCenter - (prepX - nameCenter), prepX, checksRight, noteRight: Math.max(noteCenter + (noteCenter - checksRight) - 2, noteH.x + noteH.w + 4) };
+      headerBottom = Math.min(header.y, noteH.y, ...checks.map((c) => c.y)) - 2;
+    }
+    if (!geo) continue;
+    const { nameLeft, prepX, checksRight, noteRight } = geo;
 
     const body = items.filter((i) => i.y < headerBottom && clean(i.str));
     const center = (i: PdfTextItem) => i.x + i.w / 2;
@@ -137,7 +144,29 @@ export function parseBollaPdf(pages: PdfTextItem[][]): ParsedRow[] {
     if (!names.length) continue;
     const noteCells = cells(body.filter((i) => !i.vertical && center(i) > checksRight && center(i) < noteRight));
     const extraCells = cells(body.filter((i) => !i.vertical && i.x >= noteRight));
-    const groups = body.filter((i) => !i.vertical && center(i) <= nameLeft).sort((a, b) => b.y - a.y);
+    // etichette a sinistra del nome: le righe una sotto l'altra della stessa casella diventano una sola etichetta
+    const blocks: PdfTextItem[] = [];
+    for (const g of body.filter((i) => !i.vertical && center(i) <= nameLeft).sort((a, b) => b.y - a.y || a.x - b.x)) {
+      const prev = [...blocks].reverse().find((b) => Math.abs(b.x + b.w / 2 - center(g)) < 38 && b.y - g.y <= 12.5 && b.y - g.y >= 0);
+      if (prev) {
+        prev.str = clean(`${prev.str} ${g.str}`);
+        prev.x = Math.min(prev.x, g.x);
+        prev.w = Math.max(prev.w, g.w);
+        (prev as PdfTextItem & { top?: number }).top ??= prev.y;
+        prev.y = g.y;
+      } else blocks.push({ ...g });
+    }
+    // centro verticale di ogni etichetta (per le celle unite)
+    for (const b of blocks) {
+      const top = (b as PdfTextItem & { top?: number }).top;
+      if (top !== undefined) b.y = (top + b.y) / 2;
+    }
+    // due colonne di etichette (es. AREA | CONTENITORE): quella a sinistra fa da sezione
+    const cxs = blocks.map((b) => b.x + b.w / 2);
+    const split = cxs.length ? (Math.min(...cxs) + Math.max(...cxs)) / 2 : 0;
+    const twoCols = cxs.length > 1 && Math.max(...cxs) - Math.min(...cxs) > 45;
+    const areaBlocks = twoCols ? blocks.filter((b) => b.x + b.w / 2 < split).sort((a, b) => b.y - a.y) : [];
+    const groups = (twoCols ? blocks.filter((b) => b.x + b.w / 2 >= split) : blocks).sort((a, b) => b.y - a.y);
     const sections = body.filter((i) => i.vertical && !/^oac\d*$/i.test(norm(i.str)));
 
     const rows: Row[] = names.map((item) => ({ item, y: item.y, h: 9, note: "", extra: "" }));
@@ -154,15 +183,40 @@ export function parseBollaPdf(pages: PdfTextItem[][]): ParsedRow[] {
       r.extra = clean([r.extra, ...c.map((f) => f.str)].join(" "));
     }
 
-    const { prefix, seg } = assignGroups(
+    let { prefix, seg } = assignGroups(
       rows,
       groups.map((g) => g.y),
     );
+    // se le etichette non si riescono a dividere in blocchi (es. più colonne di gruppi), ogni voce prende l'etichetta più vicina sopra di lei
+    const fallback = seg.length !== rows.length - prefix;
+    if (fallback) {
+      prefix = 0;
+      seg = rows.map((r) => {
+        let best = -1;
+        groups.forEach((g, gi) => {
+          if (g.y >= r.y - 4 && (best < 0 || g.y < groups[best]!.y)) best = gi;
+        });
+        return best;
+      });
+    }
+    const areaFit = areaBlocks.length ? assignGroups(rows, areaBlocks.map((a) => a.y)) : null;
+    const areaOf = (i: number) => {
+      if (!areaFit) return "";
+      if (areaFit.seg.length === rows.length - areaFit.prefix && i >= areaFit.prefix) return clean(areaBlocks[areaFit.seg[i - areaFit.prefix]!]!.str);
+      let best = -1;
+      areaBlocks.forEach((a, ai) => {
+        if (a.y >= rows[i]!.y - 4 && (best < 0 || a.y < areaBlocks[best]!.y)) best = ai;
+      });
+      return best >= 0 ? clean(areaBlocks[best]!.str) : "";
+    };
     rows.forEach((row, i) => {
+      const area = areaOf(i);
+      if (area) section = area;
       // la sezione (scritta verticale) vale dalla prima riga sotto il suo inizio in poi
       const sec = sections.find((s) => row.y <= s.y + s.w && row.y > s.y + s.w - 40 && rows.findIndex((r) => r.y <= s.y + s.w) === i);
       if (sec) section = clean(sec.str);
-      const group = i < prefix ? lastGroup : clean(groups[seg[i - prefix]!]!.str);
+      const gi = i < prefix ? -1 : seg[i - prefix]!;
+      const group = gi >= 0 && groups[gi] ? clean(groups[gi].str) : lastGroup;
       const { item, quantita } = splitQuantity(row.item.str);
       result.push({ categoria: category(section, group), item, quantita, note: [row.note, row.extra].filter(Boolean).join(" — ") });
       if (i === rows.length - 1) lastGroup = group;
