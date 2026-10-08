@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ClipboardCheck, Phone } from "lucide-react";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { PresenzaBox } from "@/components/PresenzaBox";
 import { Button, Card, ErrorBox, Field, Loading, ParticipantTag, SectionTitle, ShieldDate, StatusTag } from "@/components/ui-kit";
 import { useApiMutation, useMyEvent } from "@/lib/api";
 import { formatDateLong, timeRange } from "@/lib/format";
@@ -102,6 +103,8 @@ function EventoUser() {
                     )}
                     {e.compenso && <Field label="Compenso">{e.compenso}</Field>}
                   </Card>
+
+                  {e.stato !== "annullato" && <PresenzaBox code={e.code} />}
 
                   {team.length > 0 && (
                     <Card className="mt-5">

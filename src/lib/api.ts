@@ -130,6 +130,8 @@ export interface MalEvent {
   luogo: string;
   tipo: string;
   tematica?: string;
+  /** sigla dell'evento per il foglio presenze, es. OaC6 */
+  sigla?: string;
   descrizione: string;
   info_operative: string;
   referente_nome: string;
@@ -193,6 +195,8 @@ export interface MyEvent {
   luogo: string;
   tipo: string;
   tematica?: string;
+  /** sigla dell'evento per il foglio presenze, es. OaC6 */
+  sigla?: string;
   descrizione: string;
   stato: EventStatus;
   motivo_annullamento: string;
@@ -298,6 +302,36 @@ export const useTavernaPeople = (area: Area) =>
     queryFn: () => api(area, "/taverna/persone"),
     staleTime: 60_000,
   });
+
+export interface PresenzaEvento {
+  mese: string;
+  chiuso: boolean;
+  tipologia: string;
+  location: string;
+  data: string;
+  ruolo: string;
+  tariffa: string;
+  diaria: string;
+  pernotti: string;
+  viaggi: string;
+}
+export interface FoglioRigaApi {
+  event_id: number;
+  data: string;
+  tipologia: string;
+  location: string;
+  ruolo: string;
+  tariffa: string;
+  diaria: string;
+  pernotti: string;
+  viaggi: string;
+}
+export const useMyPresenza = (code: string, enabled = true) => useApiQuery<PresenzaEvento>("user", ["presenze", code], `/my/presenze/${encodeURIComponent(code)}`, enabled);
+export const useMyFogli = () =>
+  useApiQuery<{
+    aperti: Array<{ mese: string; righe: FoglioRigaApi[]; chiudibile: boolean; chiudibile_dal: string }>;
+    chiusi: Array<{ id: number; mese: string; quando: string; scade_il: string }>;
+  }>("user", ["fogli"], "/my/fogli");
 
 export interface MonthlyReport {
   id: number;

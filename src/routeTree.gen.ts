@@ -20,6 +20,7 @@ import { Route as AdminTavernaRouteImport } from './routes/admin.taverna'
 import { Route as UIndexRouteImport } from './routes/u.index'
 import { Route as UCalendarioRouteImport } from './routes/u.calendario'
 import { Route as UNotificheRouteImport } from './routes/u.notifiche'
+import { Route as UPresenzeRouteImport } from './routes/u.presenze'
 import { Route as UProfiloRouteImport } from './routes/u.profilo'
 import { Route as UShoutRouteImport } from './routes/u.shout'
 import { Route as UTavernaRouteImport } from './routes/u.taverna'
@@ -85,6 +86,11 @@ const UCalendarioRoute = UCalendarioRouteImport.update({
 const UNotificheRoute = UNotificheRouteImport.update({
   id: '/u/notifiche',
   path: '/u/notifiche',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UPresenzeRoute = UPresenzeRouteImport.update({
+  id: '/u/presenze',
+  path: '/u/presenze',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UProfiloRoute = UProfiloRouteImport.update({
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/admin/taverna': typeof AdminTavernaRoute
   '/u/calendario': typeof UCalendarioRoute
   '/u/notifiche': typeof UNotificheRoute
+  '/u/presenze': typeof UPresenzeRoute
   '/u/profilo': typeof UProfiloRoute
   '/u/shout': typeof UShoutRoute
   '/u/taverna': typeof UTavernaRoute
@@ -177,6 +184,7 @@ export interface FileRoutesByTo {
   '/admin/taverna': typeof AdminTavernaRoute
   '/u/calendario': typeof UCalendarioRoute
   '/u/notifiche': typeof UNotificheRoute
+  '/u/presenze': typeof UPresenzeRoute
   '/u/profilo': typeof UProfiloRoute
   '/u/shout': typeof UShoutRoute
   '/u/taverna': typeof UTavernaRoute
@@ -202,6 +210,7 @@ export interface FileRoutesById {
   '/admin/taverna': typeof AdminTavernaRoute
   '/u/calendario': typeof UCalendarioRoute
   '/u/notifiche': typeof UNotificheRoute
+  '/u/presenze': typeof UPresenzeRoute
   '/u/profilo': typeof UProfiloRoute
   '/u/shout': typeof UShoutRoute
   '/u/taverna': typeof UTavernaRoute
@@ -228,6 +237,7 @@ export interface FileRouteTypes {
     | '/admin/taverna'
     | '/u/calendario'
     | '/u/notifiche'
+    | '/u/presenze'
     | '/u/profilo'
     | '/u/shout'
     | '/u/taverna'
@@ -252,6 +262,7 @@ export interface FileRouteTypes {
     | '/admin/taverna'
     | '/u/calendario'
     | '/u/notifiche'
+    | '/u/presenze'
     | '/u/profilo'
     | '/u/shout'
     | '/u/taverna'
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '/admin/taverna'
     | '/u/calendario'
     | '/u/notifiche'
+    | '/u/presenze'
     | '/u/profilo'
     | '/u/shout'
     | '/u/taverna'
@@ -301,6 +313,7 @@ export interface RootRouteChildren {
   AdminTavernaRoute: typeof AdminTavernaRoute
   UCalendarioRoute: typeof UCalendarioRoute
   UNotificheRoute: typeof UNotificheRoute
+  UPresenzeRoute: typeof UPresenzeRoute
   UProfiloRoute: typeof UProfiloRoute
   UShoutRoute: typeof UShoutRoute
   UTavernaRoute: typeof UTavernaRoute
@@ -395,6 +408,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UNotificheRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/u/presenze': {
+      id: '/u/presenze'
+      path: '/u/presenze'
+      fullPath: '/u/presenze'
+      preLoaderRoute: typeof UPresenzeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/u/profilo': {
       id: '/u/profilo'
       path: '/u/profilo'
@@ -485,6 +505,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminTavernaRoute: AdminTavernaRoute,
   UCalendarioRoute: UCalendarioRoute,
   UNotificheRoute: UNotificheRoute,
+  UPresenzeRoute: UPresenzeRoute,
   UProfiloRoute: UProfiloRoute,
   UShoutRoute: UShoutRoute,
   UTavernaRoute: UTavernaRoute,

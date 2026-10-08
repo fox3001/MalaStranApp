@@ -81,6 +81,14 @@ function ProfileForm({ user }: { user: User }) {
       </Card>
 
       <Card className="mt-6">
+        <SectionTitle>Fogli presenza</SectionTitle>
+        <p className="mb-3 text-[15px] italic text-muted-foreground">Il Foglio Presenze del mese: lo controlli, lo chiudi a fine mese e lo scarichi in PDF.</p>
+        <Link to="/u/presenze" className="inline-flex min-h-11 items-center border border-primary px-3 font-display text-[12px] uppercase tracking-[0.14em] text-primary">
+          Apri i fogli presenza
+        </Link>
+      </Card>
+
+      <Card className="mt-6">
         <SectionTitle>I giorni in cui non ci sei</SectionTitle>
         <p className="mb-3 text-[15px] italic text-muted-foreground">Si segnano dal calendario: tocchi i giorni in cui non puoi lavorare e l'admin non ti proporrà per quelle date.</p>
         <Link to="/u/calendario" className="inline-flex min-h-11 items-center border border-primary px-3 font-display text-[12px] uppercase tracking-[0.14em] text-primary">

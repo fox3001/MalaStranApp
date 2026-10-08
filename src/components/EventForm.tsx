@@ -6,7 +6,7 @@ import { EVENT_STATUS_LABEL } from "@/lib/format";
 export type EventInput = Omit<MalEvent, "id" | "code" | "conteggi">;
 
 export const EMPTY_EVENT: EventInput = {
-  nome: "", data: "", ora_ritrovo: "", ora_inizio: "", ora_fine: "", luogo: "", tipo: "", tematica: "", descrizione: "", info_operative: "",
+  nome: "", data: "", ora_ritrovo: "", ora_inizio: "", ora_fine: "", luogo: "", tipo: "", tematica: "", sigla: "", descrizione: "", info_operative: "",
   referente_nome: "", referente_telefono: "", compenso: "", compenso_visibile: false, note_admin: "", note_finali: "", stato: "richiesta", motivo_annullamento: "",
 };
 
@@ -47,6 +47,14 @@ export function EventForm({ initial, submitLabel, busy, onSubmit, extra }: { ini
             <option key={x} value={x} />
           ))}
         </datalist>
+        <TextInput
+          label="Sigla (foglio presenze)"
+          value={v.sigla ?? ""}
+          onChange={set("sigla")}
+          maxLength={12}
+          placeholder="es. OaC6"
+          hint="Va nella colonna «Tipologia evento» del foglio presenze. Se la lasci vuota, la prendo dal nome (es. «OaC6 – Villa Longoni»)."
+        />
         <TextInput label="Luogo" value={v.luogo} onChange={set("luogo")} placeholder="Indirizzo o nome del posto" />
         <TextArea label="Descrizione (la vedono gli user invitati)" value={v.descrizione} onChange={set("descrizione")} />
         <SelectInput label="Stato evento" value={v.stato} onChange={(e) => setV((s) => ({ ...s, stato: e.target.value as EventStatus }))}>
