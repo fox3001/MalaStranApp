@@ -1,0 +1,17 @@
+{
+  "name": "MalaStranApp",
+  "short_name": "MalaStranApp",
+  "description": "Eventi e staff di Malastrana Eventi",
+  "lang": "it",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f3ecdd",
+  "theme_color": "#5b1a1e",
+  "icons": [
+    { "src": "/icone/icona-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icone/icona-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icone/icona-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
