@@ -82,7 +82,7 @@ function ProfileForm({ user }: { user: User }) {
 
       <Card className="mt-6">
         <SectionTitle>Fogli presenza</SectionTitle>
-        <p className="mb-3 text-[15px] italic text-muted-foreground">Il Foglio Presenze del mese: lo controlli, lo chiudi a fine mese e lo scarichi in PDF.</p>
+        <p className="mb-3 text-[15px] italic text-muted-foreground">Il Foglio Presenze del mese: lo controlli, lo chiudi a fine mese e lo scarichi in Word.</p>
         <Link to="/u/presenze" className="inline-flex min-h-11 items-center border border-primary px-3 font-display text-[12px] uppercase tracking-[0.14em] text-primary">
           Apri i fogli presenza
         </Link>

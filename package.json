@@ -13,7 +13,7 @@
     "@tanstack/react-query": "^5.0.0",
     "@tanstack/react-router": "^1.0.0",
     "clsx": "^2.1.1",
-    "jspdf": "^2.5.2",
+    "docx": "^9.0.2",
     "lucide-react": "^0.468.0",
     "pdfjs-dist": "^4.10.38",
     "react": "^18.3.1",

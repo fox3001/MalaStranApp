@@ -6,7 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { Button, Card, Empty, ErrorBox, Loading, PageTitle, SectionTitle } from "@/components/ui-kit";
 import { api, useApiMutation, useMyFogli, useProfile, type FoglioRigaApi } from "@/lib/api";
 import { MONTHS, formatDate } from "@/lib/format";
-import { foglioPdf } from "@/lib/foglioPdf";
+import { foglioDocx } from "@/lib/foglioDocx";
 
 export const Route = createFileRoute("/u/presenze")({ component: FogliPresenza });
 
@@ -26,7 +26,7 @@ function FogliPresenza() {
     setBusy(id);
     try {
       const d = await api<{ mese: string; nome: string; cognome: string; righe: FoglioRigaApi[] }>("user", `/my/fogli/chiusi/${id}`);
-      await foglioPdf(d.mese, d.nome, d.cognome, d.righe);
+      await foglioDocx(d.mese, d.nome, d.cognome, d.righe);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Errore");
     } finally {
@@ -39,7 +39,7 @@ function FogliPresenza() {
       <PageTitle
         eyebrow="Foglio Presenze 3.0"
         title="Fogli presenza"
-        subtitle="Ruolo, tariffa e rimborsi si scrivono nella scheda di ogni evento. A fine mese controlli qui e chiudi il foglio."
+        subtitle="Ruolo, tariffa e rimborsi si scrivono nella scheda di ogni evento. A fine mese controlli qui e chiudi il foglio: lo scarichi in Word e puoi aggiungere dettagli a mano."
       />
       {q.isLoading ? (
         <Loading />
@@ -98,7 +98,7 @@ function FogliPresenza() {
 
           <section className="mt-6">
             <SectionTitle>Il mio archivio</SectionTitle>
-            <p className="mb-2 text-[14px] italic text-muted-foreground">I fogli chiusi restano qui 3 mesi, poi si cancellano.</p>
+            <p className="mb-2 text-[14px] italic text-muted-foreground">I fogli chiusi si scaricano in Word (.docx) e restano qui 3 mesi, poi si cancellano. Se in un giorno hai fatto due eventi, nel foglio c'è il primo: il secondo aggiungilo a mano.</p>
             {q.data!.chiusi.length === 0 ? (
               <Empty>Ancora nessun foglio chiuso.</Empty>
             ) : (
@@ -117,7 +117,7 @@ function FogliPresenza() {
                       disabled={busy === c.id}
                       className="inline-flex min-h-10 shrink-0 items-center gap-1 border border-accent px-3 text-xs font-semibold text-accent disabled:opacity-50"
                     >
-                      <Download className="h-4 w-4" /> PDF
+                      <Download className="h-4 w-4" /> Word
                     </button>
                   </li>
                 ))}
