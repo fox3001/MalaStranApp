@@ -22,6 +22,15 @@ function FogliPresenza() {
   });
   const [busy, setBusy] = useState<number | null>(null);
 
+  async function scaricaAperto(mese: string, righe: FoglioRigaApi[]) {
+    const u = me.data?.user;
+    try {
+      await foglioDocx(mese, u?.nome ?? "", u?.cognome ?? "", righe);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Errore");
+    }
+  }
+
   async function scarica(id: number) {
     setBusy(id);
     try {
@@ -80,6 +89,13 @@ function FogliPresenza() {
                       </li>
                     ))}
                   </ul>
+                  <button
+                    type="button"
+                    onClick={() => void scaricaAperto(f.mese, f.righe)}
+                    className="inline-flex min-h-10 items-center justify-center gap-1.5 border border-accent px-3 text-xs font-semibold text-accent"
+                  >
+                    <Download className="h-4 w-4" /> Scarica in Word com'è adesso
+                  </button>
                   {mancanti > 0 && <p className="text-[14px] italic text-primary">{mancanti === 1 ? "1 evento senza ruolo o tariffa." : `${mancanti} eventi senza ruolo o tariffa.`}</p>}
                   <Button
                     type="button"

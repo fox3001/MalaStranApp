@@ -111,6 +111,20 @@ function UserHome() {
                 </svg>
               }
             />
+            <span className="col-span-2">
+              <Tile
+                to="/u/presenze"
+                translucent
+                tone="accent"
+                label="Fogli presenza"
+                icon={
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.3} className="h-7 w-7" aria-hidden="true">
+                    <path d="M6 3h9l4 4v14H6z" />
+                    <path d="M15 3v4h4M9 11h7M9 14h7M9 17h4" />
+                  </svg>
+                }
+              />
+            </span>
           </nav>
 
           <ShoutPreview />
