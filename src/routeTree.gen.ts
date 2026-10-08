@@ -15,11 +15,13 @@ import { Route as AdminArchivioRouteImport } from './routes/admin.archivio'
 import { Route as AdminCalendarioRouteImport } from './routes/admin.calendario'
 import { Route as AdminNotificheRouteImport } from './routes/admin.notifiche'
 import { Route as AdminReportRouteImport } from './routes/admin.report'
+import { Route as AdminShoutRouteImport } from './routes/admin.shout'
 import { Route as AdminTavernaRouteImport } from './routes/admin.taverna'
 import { Route as UIndexRouteImport } from './routes/u.index'
 import { Route as UCalendarioRouteImport } from './routes/u.calendario'
 import { Route as UNotificheRouteImport } from './routes/u.notifiche'
 import { Route as UProfiloRouteImport } from './routes/u.profilo'
+import { Route as UShoutRouteImport } from './routes/u.shout'
 import { Route as UTavernaRouteImport } from './routes/u.taverna'
 import { Route as AdminCollaboratoriIndexRouteImport } from './routes/admin.collaboratori.index'
 import { Route as AdminCollaboratoriIdRouteImport } from './routes/admin.collaboratori.$id'
@@ -60,6 +62,11 @@ const AdminReportRoute = AdminReportRouteImport.update({
   path: '/admin/report',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminShoutRoute = AdminShoutRouteImport.update({
+  id: '/admin/shout',
+  path: '/admin/shout',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminTavernaRoute = AdminTavernaRouteImport.update({
   id: '/admin/taverna',
   path: '/admin/taverna',
@@ -83,6 +90,11 @@ const UNotificheRoute = UNotificheRouteImport.update({
 const UProfiloRoute = UProfiloRouteImport.update({
   id: '/u/profilo',
   path: '/u/profilo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UShoutRoute = UShoutRouteImport.update({
+  id: '/u/shout',
+  path: '/u/shout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UTavernaRoute = UTavernaRouteImport.update({
@@ -137,10 +149,12 @@ export interface FileRoutesByFullPath {
   '/admin/calendario': typeof AdminCalendarioRoute
   '/admin/notifiche': typeof AdminNotificheRoute
   '/admin/report': typeof AdminReportRoute
+  '/admin/shout': typeof AdminShoutRoute
   '/admin/taverna': typeof AdminTavernaRoute
   '/u/calendario': typeof UCalendarioRoute
   '/u/notifiche': typeof UNotificheRoute
   '/u/profilo': typeof UProfiloRoute
+  '/u/shout': typeof UShoutRoute
   '/u/taverna': typeof UTavernaRoute
   '/admin/': typeof AdminIndexRoute
   '/u/': typeof UIndexRoute
@@ -159,10 +173,12 @@ export interface FileRoutesByTo {
   '/admin/calendario': typeof AdminCalendarioRoute
   '/admin/notifiche': typeof AdminNotificheRoute
   '/admin/report': typeof AdminReportRoute
+  '/admin/shout': typeof AdminShoutRoute
   '/admin/taverna': typeof AdminTavernaRoute
   '/u/calendario': typeof UCalendarioRoute
   '/u/notifiche': typeof UNotificheRoute
   '/u/profilo': typeof UProfiloRoute
+  '/u/shout': typeof UShoutRoute
   '/u/taverna': typeof UTavernaRoute
   '/admin': typeof AdminIndexRoute
   '/u': typeof UIndexRoute
@@ -182,10 +198,12 @@ export interface FileRoutesById {
   '/admin/calendario': typeof AdminCalendarioRoute
   '/admin/notifiche': typeof AdminNotificheRoute
   '/admin/report': typeof AdminReportRoute
+  '/admin/shout': typeof AdminShoutRoute
   '/admin/taverna': typeof AdminTavernaRoute
   '/u/calendario': typeof UCalendarioRoute
   '/u/notifiche': typeof UNotificheRoute
   '/u/profilo': typeof UProfiloRoute
+  '/u/shout': typeof UShoutRoute
   '/u/taverna': typeof UTavernaRoute
   '/admin/': typeof AdminIndexRoute
   '/u/': typeof UIndexRoute
@@ -206,10 +224,12 @@ export interface FileRouteTypes {
     | '/admin/calendario'
     | '/admin/notifiche'
     | '/admin/report'
+    | '/admin/shout'
     | '/admin/taverna'
     | '/u/calendario'
     | '/u/notifiche'
     | '/u/profilo'
+    | '/u/shout'
     | '/u/taverna'
     | '/admin/'
     | '/u/'
@@ -228,10 +248,12 @@ export interface FileRouteTypes {
     | '/admin/calendario'
     | '/admin/notifiche'
     | '/admin/report'
+    | '/admin/shout'
     | '/admin/taverna'
     | '/u/calendario'
     | '/u/notifiche'
     | '/u/profilo'
+    | '/u/shout'
     | '/u/taverna'
     | '/admin'
     | '/u'
@@ -250,10 +272,12 @@ export interface FileRouteTypes {
     | '/admin/calendario'
     | '/admin/notifiche'
     | '/admin/report'
+    | '/admin/shout'
     | '/admin/taverna'
     | '/u/calendario'
     | '/u/notifiche'
     | '/u/profilo'
+    | '/u/shout'
     | '/u/taverna'
     | '/admin/'
     | '/u/'
@@ -273,10 +297,12 @@ export interface RootRouteChildren {
   AdminCalendarioRoute: typeof AdminCalendarioRoute
   AdminNotificheRoute: typeof AdminNotificheRoute
   AdminReportRoute: typeof AdminReportRoute
+  AdminShoutRoute: typeof AdminShoutRoute
   AdminTavernaRoute: typeof AdminTavernaRoute
   UCalendarioRoute: typeof UCalendarioRoute
   UNotificheRoute: typeof UNotificheRoute
   UProfiloRoute: typeof UProfiloRoute
+  UShoutRoute: typeof UShoutRoute
   UTavernaRoute: typeof UTavernaRoute
   AdminIndexRoute: typeof AdminIndexRoute
   UIndexRoute: typeof UIndexRoute
@@ -334,6 +360,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminReportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/shout': {
+      id: '/admin/shout'
+      path: '/admin/shout'
+      fullPath: '/admin/shout'
+      preLoaderRoute: typeof AdminShoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/taverna': {
       id: '/admin/taverna'
       path: '/admin/taverna'
@@ -367,6 +400,13 @@ declare module '@tanstack/react-router' {
       path: '/u/profilo'
       fullPath: '/u/profilo'
       preLoaderRoute: typeof UProfiloRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/u/shout': {
+      id: '/u/shout'
+      path: '/u/shout'
+      fullPath: '/u/shout'
+      preLoaderRoute: typeof UShoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/u/taverna': {
@@ -441,10 +481,12 @@ const rootRouteChildren: RootRouteChildren = {
   AdminCalendarioRoute: AdminCalendarioRoute,
   AdminNotificheRoute: AdminNotificheRoute,
   AdminReportRoute: AdminReportRoute,
+  AdminShoutRoute: AdminShoutRoute,
   AdminTavernaRoute: AdminTavernaRoute,
   UCalendarioRoute: UCalendarioRoute,
   UNotificheRoute: UNotificheRoute,
   UProfiloRoute: UProfiloRoute,
+  UShoutRoute: UShoutRoute,
   UTavernaRoute: UTavernaRoute,
   AdminIndexRoute: AdminIndexRoute,
   UIndexRoute: UIndexRoute,

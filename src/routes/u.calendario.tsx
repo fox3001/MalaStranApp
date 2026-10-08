@@ -7,7 +7,7 @@ import { AssenzeList } from "@/components/AssenzeList";
 import { MonthCalendar } from "@/components/MonthCalendar";
 import { ErrorBox, Loading, SectionTitle, ShieldDate } from "@/components/ui-kit";
 import { api, useApiMutation, useMyAssenze, useMyEvents } from "@/lib/api";
-import { formatDateLong } from "@/lib/format";
+import { formatDate, formatDateLong, todayIso } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/u/calendario")({ component: CalendarioUser });
@@ -48,18 +48,26 @@ function CalendarioUser() {
   return (
     <AppShell area="user" eyebrow="Le tue date" title="Calendario">
       <div className="mt-4">
+        <p className="mb-2 text-[15px] italic text-muted-foreground">
+          {awayMode ? "" : "Tocca un giorno del calendario per segnare che non ci sei."}
+        </p>
         <button
           type="button"
           onClick={() => setAwayMode((v) => !v)}
           aria-pressed={awayMode}
           className={cn(
-            "mb-3 flex min-h-11 w-full items-center justify-center gap-2 border px-3 font-display text-[12px] uppercase tracking-[0.14em]",
+            "mb-3 flex min-h-12 w-full items-center justify-center gap-2 px-3 font-display text-[12px] uppercase tracking-[0.14em] text-white",
             awayMode
-              ? "border-primary bg-primary text-white [box-shadow:inset_0_0_0_3px_var(--color-primary),inset_0_0_0_4px_var(--color-gold-light)]"
-              : "border-primary bg-card text-primary",
+              ? "bg-accent [box-shadow:inset_0_0_0_3px_var(--color-accent),inset_0_0_0_4px_var(--color-gold-light)]"
+              : "bg-primary [box-shadow:inset_0_0_0_3px_var(--color-primary),inset_0_0_0_4px_var(--color-gold-light)]",
           )}
         >
-          {awayMode ? "Fatto" : "Segna i giorni in cui non ci sei"}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-5 w-5" aria-hidden="true">
+            <rect x="4" y="5" width="16" height="15" />
+            <path d="M4 10h16M9 3v4M15 3v4" />
+            {awayMode ? <path d="M9 15l2 2 4-4" /> : <path d="M10 13l4 4M14 13l-4 4" />}
+          </svg>
+          {awayMode ? "Fatto, ho finito" : "Segna più giorni insieme"}
         </button>
         {awayMode && (
           <p className="mb-3 border-l-2 border-primary pl-2 text-[15px] italic text-muted-foreground">
@@ -76,6 +84,20 @@ function CalendarioUser() {
             awayMode={awayMode}
             onAwayToggle={(d) => void toggle(d)}
             awayLegend="non ci sei"
+            dayAction={(d) =>
+              d < todayIso() ? null : (
+                <button
+                  type="button"
+                  onClick={() => void toggle(d)}
+                  className={cn(
+                    "mb-3 flex min-h-12 w-full items-center justify-center gap-2 border px-3 font-display text-[12px] uppercase tracking-[0.12em]",
+                    away.has(d) ? "border-accent bg-card text-accent" : "border-primary bg-primary text-white",
+                  )}
+                >
+                  {away.has(d) ? `Ci sono di nuovo il ${formatDate(d)}` : `Non ci sono il ${formatDate(d)}`}
+                </button>
+              )
+            }
             legend={[
               { tone: "primary", label: "da rispondere" },
               { tone: "accent", label: "confermato" },

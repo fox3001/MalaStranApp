@@ -297,6 +297,22 @@ export const useTavernaPeople = (area: Area) =>
     staleTime: 60_000,
   });
 
+export interface Shout {
+  id: number;
+  testo: string;
+  a_tutti: boolean;
+  created_at: string;
+  /** data e ora italiane, es. "08/10/2026 10:59" */
+  quando: string;
+  letto?: boolean;
+  destinatari?: string[];
+  letti?: number;
+}
+/** Shout ricevuti dallo user */
+export const useMyShouts = () => useApiQuery<{ shouts: Shout[]; unread: number }>("user", ["shouts"], "/shouts");
+/** Shout mandati dall'admin */
+export const useAdminShouts = () => useApiQuery<{ shouts: Shout[] }>("admin", ["shouts"], "/admin/shouts");
+
 export const useNotifications = (area: Area) =>
   useApiQuery<{ unread: number; notifications: Notification[] }>(area, ["notifications"], "/notifications");
 

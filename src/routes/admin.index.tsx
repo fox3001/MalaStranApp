@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, useLogout } from "@/components/AppShell";
 import { FlockButton, TowerBackdrop } from "@/components/TowerBackdrop";
+import { ShoutIcon } from "@/components/ShoutIcon";
 import { Empty, ErrorBox, EventRow, Loading, SectionTitle, Stat, Tile } from "@/components/ui-kit";
 import { useAdminEvents, useAdminUsers, useNotifications } from "@/lib/api";
 import { useState } from "react";
@@ -111,11 +112,11 @@ function AdminHome() {
 
           <section className="relative mt-[18px]">
             <SectionTitle opaque>Altre stanze</SectionTitle>
-            <nav className="grid grid-cols-3 gap-2.5">
+            <nav className="grid grid-cols-2 gap-2.5">
+              <Tile to="/admin/shout" tone="accent" label="Shout" icon={<ShoutIcon className="h-[26px] w-[26px]" />} />
               <Tile to="/admin/report" label="Report" icon={ico(<path d="M4 20V4M4 20h16M8 16v-4M12 16V8M16 16v-6" />)} />
               <Tile
                 to="/admin/archivio"
-                tone="accent"
                 label="Archivio"
                 icon={ico(
                   <>
@@ -126,6 +127,7 @@ function AdminHome() {
               />
               <Tile
                 to="/admin/notifiche"
+                tone="accent"
                 label="Notifiche"
                 icon={ico(
                   <>

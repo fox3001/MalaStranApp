@@ -20,6 +20,7 @@ export function MonthCalendar({
   awayMode,
   onAwayToggle,
   awayLegend,
+  dayAction,
 }: {
   items: CalendarItem[];
   legend?: { tone: Tone; label: string }[];
@@ -29,6 +30,8 @@ export function MonthCalendar({
   awayMode?: boolean;
   onAwayToggle?: (date: string) => void;
   awayLegend?: string;
+  /** cosa mostrare sotto quando si tocca un giorno (es. il tasto "Non ci sono") */
+  dayAction?: (date: string) => ReactNode;
 }) {
   const today = todayIso();
   const [cursor, setCursor] = useState(() => ({ y: Number(today.slice(0, 4)), m: Number(today.slice(5, 7)) - 1 }));
@@ -122,6 +125,11 @@ export function MonthCalendar({
           );
         })}
       </div>
+      {selected && dayAction && (
+        <div className="mt-2" ref={(el) => el?.scrollIntoView({ block: "nearest", behavior: "smooth" })}>
+          {dayAction(selected)}
+        </div>
+      )}
       {(legend || awayLegend) && (
         <div className="mt-2.5 flex flex-wrap gap-4 text-sm text-muted-foreground">
           {legend?.map((l) => (

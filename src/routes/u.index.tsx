@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, BellButton, useLogout } from "@/components/AppShell";
+import { ShoutIcon } from "@/components/ShoutIcon";
 import { Sigillo } from "@/components/Sigillo";
 import { ArcaneCircle, ErrorBox, Loading, ShieldDate, Tile, Wordmark } from "@/components/ui-kit";
-import { useMyEvents, useProfile } from "@/lib/api";
+import { useMyEvents, useMyShouts, useProfile } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { timeRange, todayIso } from "@/lib/format";
 
 export const Route = createFileRoute("/u/")({ component: UserHome });
@@ -110,8 +112,42 @@ function UserHome() {
               }
             />
           </nav>
+
+          <ShoutPreview />
         </>
       )}
     </AppShell>
+  );
+}
+
+/** Anteprima dell'ultimo shout dell'admin, sotto ai due riquadri. */
+function ShoutPreview() {
+  const q = useMyShouts();
+  const last = q.data?.shouts[0];
+  const unread = q.data?.unread ?? 0;
+  return (
+    <Link
+      to="/u/shout"
+      className={cn("relative mt-3.5 block border bg-card px-4 py-3", unread ? "border-accent [box-shadow:inset_4px_0_0_var(--color-accent)]" : "border-gold")}
+    >
+      <span className="flex items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-1.5 font-display text-[10px] uppercase tracking-[0.2em] text-accent">
+          <ShoutIcon className="h-4 w-4" /> Shout dall'admin
+        </span>
+        {unread > 0 ? (
+          <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent px-1 font-sans text-[10px] font-bold text-white">{unread}</span>
+        ) : (
+          last && <span className="text-[13px] italic text-muted-foreground">{last.quando}</span>
+        )}
+      </span>
+      {last ? (
+        <>
+          <span className="mt-1 line-clamp-3 block whitespace-pre-wrap break-words text-[17px] leading-snug">{last.testo}</span>
+          <span className="mt-1 block text-right font-display text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{unread > 0 ? `${last.quando} · leggi` : "Tutti gli shout ›"}</span>
+        </>
+      ) : (
+        <span className="mt-1 block italic text-muted-foreground">Nessun messaggio dall'admin per ora.</span>
+      )}
+    </Link>
   );
 }

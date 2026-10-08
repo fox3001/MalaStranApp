@@ -37,7 +37,11 @@ export function NotificationList({ area }: { area: Area }) {
           );
           return (
             <li key={n.id} className="border-b border-border last:border-b-0">
-              {n.type === "taverna" ? (
+              {n.type === "shout" && area === "user" ? (
+                <Link to="/u/shout" onClick={() => !n.is_read && readOne.mutate(n.id)} className="block px-4 py-3 active:bg-muted">
+                  {body}
+                </Link>
+              ) : n.type === "taverna" ? (
                 <Link to={area === "admin" ? "/admin/taverna" : "/u/taverna"} onClick={() => !n.is_read && readOne.mutate(n.id)} className="block px-4 py-3 active:bg-muted">
                   {body}
                 </Link>

@@ -1,16 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { Download } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
-import { Button, Empty, ErrorBox, Loading, PageTitle } from "@/components/ui-kit";
+import { Button, Card, Empty, ErrorBox, Loading, PageTitle, SectionTitle } from "@/components/ui-kit";
 import { api, downloadText, useArchive } from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import { formatDate, todayIso } from "@/lib/format";
 
 export const Route = createFileRoute("/admin/archivio")({ component: Archivio });
 
 function Archivio() {
   const q = useArchive();
   const list = q.data?.archives ?? [];
+  const [mese, setMese] = useState(() => todayIso().slice(0, 7));
+
+  async function monthly() {
+    try {
+      const d = await api<{ testo: string }>("admin", `/admin/report-mensile?mese=${mese}`);
+      downloadText(`report-mensile-malastrana-${mese}.txt`, d.testo);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Errore");
+    }
+  }
 
   async function one(id: number, code: string) {
     try {
@@ -32,6 +43,24 @@ function Archivio() {
   return (
     <AppShell area="admin" title="Archivio" back="/admin">
       <PageTitle eyebrow="Eventi passati" title="Archivio" subtitle="Un mese dopo la data, ogni evento viene tolto dall'app e il suo resoconto finisce qui come testo." />
+      <Card className="mt-5 grid gap-3">
+        <SectionTitle>Report mensile</SectionTitle>
+        <p className="text-sm text-muted-foreground">Un file di testo con i resoconti degli eventi del mese e tutti gli shout mandati (a chi, giorno e ora).</p>
+        <div className="flex items-end gap-2">
+          <label className="block flex-1">
+            <span className="eyebrow text-accent">Mese</span>
+            <input
+              type="month"
+              value={mese}
+              onChange={(e) => setMese(e.target.value)}
+              className="mt-1 min-h-11 w-full border border-border border-b-[1.5px] border-b-gold bg-card px-3 text-base outline-none focus:border-accent"
+            />
+          </label>
+          <Button type="button" onClick={() => void monthly()} disabled={!mese}>
+            <Download className="h-4 w-4" /> .txt
+          </Button>
+        </div>
+      </Card>
       <div className="mt-5">
         {q.isLoading ? (
           <Loading />
