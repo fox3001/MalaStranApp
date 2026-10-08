@@ -15,7 +15,14 @@ export function useFaiReport() {
     try {
       const d = await api<{ testo: string }>("admin", "/admin/report-mensile", { method: "POST", body: { mese } });
       downloadText(`report-malastrana-${mese}.txt`, d.testo);
-      toast.success("Report pronto: scaricato e salvato in Archivio per 3 mesi");
+      // insieme al report, la copia di sicurezza completa dell'app
+      try {
+        const b = await api<Record<string, unknown>>("admin", "/admin/backup");
+        downloadText(`copia-sicurezza-malastranapp-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(b));
+      } catch {
+        toast.error("Report fatto, ma la copia di sicurezza non è stata scaricata");
+      }
+      toast.success("Report pronto (salvato in Archivio per 3 mesi) + copia di sicurezza scaricata");
       void qc.invalidateQueries({ queryKey: ["admin", "report-mensili"] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Errore");

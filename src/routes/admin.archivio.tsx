@@ -49,7 +49,7 @@ function Archivio() {
       <Card className="mt-5 grid gap-3">
         <SectionTitle>Report del mese</SectionTitle>
         <p className="text-sm text-muted-foreground">
-          Un file di testo con tutto quello che è successo nel mese: eventi e info, chi ha partecipato, note, oggetti delle bolle con danni o perdite, shout e messaggi dell'admin in Taverna. Ogni report resta qui 3 mesi, poi si cancella da solo.
+          Un file di testo con tutto quello che è successo nel mese: eventi con tutte le info, eventi creati per i mesi dopo, chi ha lavorato, danni e perdite, giorni in cui gli user non c'erano, fogli presenze, shout, messaggi in Taverna e lo storico delle attività (user, password, inviti, risposte). Ogni report resta qui 3 mesi, poi si cancella da solo. Insieme si scarica anche la copia di sicurezza dell'app (file .json): tienila sul computer.
         </p>
         <div className="flex items-end gap-2">
           <label className="block flex-1">
@@ -65,6 +65,17 @@ function Archivio() {
             {fai.busy ? "…" : "Fai report"}
           </Button>
         </div>
+        <button
+          type="button"
+          onClick={() =>
+            void api<Record<string, unknown>>("admin", "/admin/backup")
+              .then((b) => downloadText(`copia-sicurezza-malastranapp-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(b)))
+              .catch((e) => toast.error(e instanceof Error ? e.message : "Errore"))
+          }
+          className="inline-flex min-h-10 items-center justify-center gap-1.5 border border-accent px-3 text-xs font-semibold text-accent"
+        >
+          <Download className="h-4 w-4" /> Scarica solo la copia di sicurezza (.json)
+        </button>
         {(reports.data?.reports.length ?? 0) > 0 && (
           <ul className="border-t border-line">
             {reports.data!.reports.map((r) => (
