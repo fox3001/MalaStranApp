@@ -261,6 +261,9 @@ export const useReport = (code: string, onlyIssues: boolean) =>
 
 export const useProfile = () => useApiQuery<{ user: User }>("user", ["profile"], "/profile");
 export const useMyAssenze = () => useApiQuery<{ assenze: Assenza[] }>("user", ["assenze"], "/profile/assenze");
+/** Calendario user: tutti gli eventi; di quelli a cui non è chiamato solo giorno e tema */
+export const useMyCalendario = () =>
+  useApiQuery<{ eventi: Array<{ code: string | null; data: string; tema: string; mio_stato: ParticipantStatus | null }> }>("user", ["calendario"], "/my/calendario");
 export const useMyCostumes = () => useApiQuery<{ costumes: Costume[] }>("user", ["costumes"], "/profile/costumes");
 export const useMyEvents = () => useApiQuery<{ events: MyEvent[] }>("user", ["events"], "/my/events");
 export const useMyEvent = (code: string) =>

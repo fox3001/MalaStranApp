@@ -6,7 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { AssenzeList } from "@/components/AssenzeList";
 import { MonthCalendar } from "@/components/MonthCalendar";
 import { ErrorBox, Loading, SectionTitle, ShieldDate } from "@/components/ui-kit";
-import { api, useApiMutation, useMyAssenze, useMyEvents } from "@/lib/api";
+import { api, useApiMutation, useMyAssenze, useMyCalendario } from "@/lib/api";
 import { formatDate, formatDateLong, todayIso } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/u/calendario")({ component: CalendarioUse
 
 /** Calendario degli user: si vedono solo le date e la tipologia/tematica, senza aprire l'evento. */
 function CalendarioUser() {
-  const q = useMyEvents();
+  const cal = useMyCalendario();
   const qc = useQueryClient();
   const assenze = useMyAssenze();
   const [awayMode, setAwayMode] = useState(false);
@@ -74,10 +74,10 @@ function CalendarioUser() {
             Tocca i giorni in cui non puoi lavorare; toccali di nuovo per toglierli. L'admin non ti proporrà per gli eventi in quei giorni.
           </p>
         )}
-        {q.isLoading ? (
+        {cal.isLoading ? (
           <Loading />
-        ) : q.isError ? (
-          <ErrorBox error={q.error} onRetry={() => void q.refetch()} />
+        ) : cal.isError ? (
+          <ErrorBox error={cal.error} onRetry={() => void cal.refetch()} />
         ) : (
           <MonthCalendar
             away={away}
@@ -101,26 +101,27 @@ function CalendarioUser() {
             legend={[
               { tone: "primary", label: "da rispondere" },
               { tone: "accent", label: "confermato" },
+              { tone: "muted", label: "altri eventi" },
             ]}
-            items={(q.data?.events ?? [])
-              .filter((e) => e.mio_stato !== "rejected" && e.mio_stato !== "unavailable" && e.stato !== "annullato")
-              .map((e) => {
-                const tone = e.mio_stato === "confirmed" ? "accent" : "primary";
-                return {
-                  key: e.code,
-                  date: e.data,
-                  tone,
-                  render: (
-                    <div className="mb-2.5 flex items-center gap-3.5 border border-border bg-card px-3 py-2.5">
-                      <ShieldDate date={e.data} tone={tone} />
-                      <span className="min-w-0">
-                        <span className="block text-[19px] font-semibold leading-tight">{e.tematica || e.tipo || "Evento"}</span>
-                        <span className="block text-[15px] capitalize text-muted-foreground">{formatDateLong(e.data)}</span>
-                      </span>
-                    </div>
-                  ),
-                };
-              })}
+            items={(cal.data?.eventi ?? []).map((e, i) => {
+              const mine = e.mio_stato === "pending" || e.mio_stato === "available" || e.mio_stato === "confirmed";
+              const tone = e.mio_stato === "confirmed" ? "accent" : mine ? "primary" : "muted";
+              return {
+                key: `${e.data}-${i}`,
+                date: e.data,
+                tone,
+                render: (
+                  <div className="mb-2.5 flex items-center gap-3.5 border border-border bg-card px-3 py-2.5">
+                    <ShieldDate date={e.data} tone={tone} />
+                    <span className="min-w-0">
+                      <span className="block text-[19px] font-semibold leading-tight">{e.tema || "Evento"}</span>
+                      <span className="block text-[15px] capitalize text-muted-foreground">{formatDateLong(e.data)}</span>
+                      {!mine && <span className="block text-[13px] italic text-muted-foreground">non sei stato chiamato per questo evento</span>}
+                    </span>
+                  </div>
+                ),
+              };
+            })}
           />
         )}
         <div className="mt-6">
