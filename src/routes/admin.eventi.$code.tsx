@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { AlertTriangle, Check, MessageSquare, Pencil, Trash2, UserPlus, X } from "lucide-react";
+import { AlertTriangle, Check, MessageSquare, Pencil, Trash2, UserPlus } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { AppShell, Tabs } from "@/components/AppShell";
 import { LedgerHead, RoundCheck } from "@/components/BollaRound";
@@ -199,11 +199,6 @@ function PeopleTab({ code, date, participants, ruoli }: { code: string; date: st
                 </p>
               )}
               <div className="mt-2 flex flex-wrap gap-2">
-                {p.stato !== "rejected" && (
-                  <SmallBtn tone="no" onClick={() => decide.mutate({ userId: p.user_id, stato: "rejected" })}>
-                    <X className="h-3.5 w-3.5" /> Non selezionare
-                  </SmallBtn>
-                )}
                 {(p.stato === "confirmed" || p.stato === "rejected") && (
                   <SmallBtn onClick={() => decide.mutate({ userId: p.user_id, stato: "pending" })}>Riapri risposta</SmallBtn>
                 )}

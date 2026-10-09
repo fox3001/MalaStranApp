@@ -155,7 +155,7 @@ export const GUIDA_ADMIN: GuidaSezione[] = [
     titolo: "Scheda evento",
     percorso: /^\/admin\/eventi\/(?!nuovo)[^/]+$/,
     punti: [
-      "Persone: «Invita user». Chi risponde «Ci sono» è subito confermato (ti arriva la notifica): non devi approvare niente. Se cambi idea: «Non selezionare» (resta nell'elenco e gli arriva «sono state scelte altre persone»); «Togli» (sparisce, senza avviso); «Rendi team leader».",
+      "Persone: «Invita user». Chi risponde «Ci sono» è subito confermato (ti arriva la notifica): non devi approvare niente. Per cambiare una persona: premi «Togli» su chi non serve più, poi «Invita user» e scegli quella nuova. «Riapri risposta» fa rispondere di nuovo l'user; «Rendi team leader» gli dà la bolla.",
       "Ruolo: per ogni confermato c'è il riquadro con maschera e chiave. Scegli tra i personaggi dei costumi della bolla e «Logistica», oppure scrivi da zero, poi Salva.",
       "Bolla: Prep = preparato in magazzino (lo spunti tu); Entrata e Uscita = spunte del team leader; Danni e Perso. Puoi aggiungere voci a mano o da file.",
       "Resoconto: riepilogo, cose da sistemare e note finali; si scarica in .txt. Dettagli: modifichi i dati dell'evento.",
