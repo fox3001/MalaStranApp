@@ -39,7 +39,7 @@ export const GUIDA_USER: GuidaSezione[] = [
     percorso: /^\/u\/eventi\/[^/]+$/,
     punti: [
       "Se ti hanno chiamato rispondi con «Sono disponibile» o «Non posso». Puoi aggiungere una nota per l'ufficio.",
-      "Dopo la tua risposta decide l'ufficio. Quando sei confermato vedi le info operative, il referente, il compenso (se l'ufficio lo mostra) e la squadra.",
+      "Se tocchi «Ci sono» sei subito confermato. Da confermato vedi le info operative, il referente, il compenso (se l'ufficio lo mostra) e la squadra.",
       "Il riquadro «Ruolo», con la maschera e la chiave, ti dice il tuo personaggio o il tuo compito (es. Logistica).",
       "«Foglio presenza»: scrivi ruolo, tariffa ed eventuali rimborsi di questo evento e premi Salva.",
       "Se sei team leader: scrivi i ruoli della squadra, compili la bolla di carico e a fine serata premi «Evento chiuso».",
@@ -155,7 +155,7 @@ export const GUIDA_ADMIN: GuidaSezione[] = [
     titolo: "Scheda evento",
     percorso: /^\/admin\/eventi\/(?!nuovo)[^/]+$/,
     punti: [
-      "Persone: «Invita user». Quando rispondono: «Conferma»; «Non selezionare» (resta nell'elenco e gli arriva «sono state scelte altre persone»); «Togli» (sparisce, senza avviso); «Rendi team leader».",
+      "Persone: «Invita user». Chi risponde «Ci sono» è subito confermato (ti arriva la notifica). Puoi comunque: «Non selezionare» (resta nell'elenco e gli arriva «sono state scelte altre persone»); «Togli» (sparisce, senza avviso); «Rendi team leader».",
       "Ruolo: per ogni confermato c'è il riquadro con maschera e chiave. Scegli tra i personaggi dei costumi della bolla e «Logistica», oppure scrivi da zero, poi Salva.",
       "Bolla: Prep = preparato in magazzino (lo spunti tu); Entrata e Uscita = spunte del team leader; Danni e Perso. Puoi aggiungere voci a mano o da file.",
       "Resoconto: riepilogo, cose da sistemare e note finali; si scarica in .txt. Dettagli: modifichi i dati dell'evento.",

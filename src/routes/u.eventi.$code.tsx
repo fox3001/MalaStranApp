@@ -16,7 +16,7 @@ function EventoUser() {
   const [nota, setNota] = useState("");
   const close = useApiMutation<void>("user", () => ({ path: `/my/events/${code}/chiudi`, method: "POST" }), { success: "Evento chiuso: l'ufficio è stato avvisato", invalidate: [["events"]] });
   const answer = useApiMutation<"available" | "unavailable">("user", (stato) => ({ path: `/my/events/${code}/availability`, method: "POST", body: { stato, nota } }), {
-    success: "Risposta inviata all'ufficio",
+    success: "Risposta inviata",
     invalidate: [["events"]],
   });
   const setRuolo = useApiMutation<{ userId: number; ruolo_evento: string }>(
@@ -91,7 +91,7 @@ function EventoUser() {
                       Non posso
                     </Button>
                   </div>
-                  {p.stato === "available" && <p className="text-xs text-muted-foreground">Hai dato disponibilità: ora l'ufficio deciderà chi confermare.</p>}
+                  <p className="text-xs text-muted-foreground">Se tocchi «Ci sono» sei subito confermato e vedi tutta la scheda dell'evento.</p>
                 </Card>
               )}
 
