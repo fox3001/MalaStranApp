@@ -199,11 +199,6 @@ function PeopleTab({ code, date, participants, ruoli }: { code: string; date: st
                 </p>
               )}
               <div className="mt-2 flex flex-wrap gap-2">
-                {p.stato !== "confirmed" && (
-                  <SmallBtn tone="ok" onClick={() => decide.mutate({ userId: p.user_id, stato: "confirmed" })}>
-                    <Check className="h-3.5 w-3.5" /> Conferma
-                  </SmallBtn>
-                )}
                 {p.stato !== "rejected" && (
                   <SmallBtn tone="no" onClick={() => decide.mutate({ userId: p.user_id, stato: "rejected" })}>
                     <X className="h-3.5 w-3.5" /> Non selezionare
