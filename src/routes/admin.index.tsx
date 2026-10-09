@@ -22,7 +22,7 @@ function AdminHome() {
   const logout = useLogout("admin");
   const users = useAdminUsers();
   const userCount = users.data?.users.length ?? 0;
-  const [showUsers, setShowUsers] = useState(false);
+  const [showUsers, setShowUsers] = useState(true);
 
   const list = events.data?.events ?? [];
   const today = todayIso();

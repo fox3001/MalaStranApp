@@ -22,14 +22,14 @@ export function TowerBackdrop({ birds = 20 }: { birds?: number }) {
 }
 
 
-/** Tasto dello stormo: una sagoma di user con tre uccellini attorno. Acceso = un condor per ogni user registrato. */
+/** Tasto dello stormo: una sagoma di user con tre uccellini attorno. Acceso (normale) = un condor per ogni user registrato; spento = 20 condor. */
 export function FlockButton({ on, count, onToggle, light = true, label }: { on: boolean; count: number; onToggle: () => void; light?: boolean; label?: string }) {
   return (
     <button
       type="button"
       onClick={onToggle}
       aria-pressed={on}
-      aria-label={label ?? (on ? `Stormo: ${count} condor. Tocca per tornare a 20` : "Mostra un condor per ogni user")}
+      aria-label={label ?? (on ? `Stormo: ${count} condor. Tocca per vederne 20` : "Mostra un condor per ogni user")}
       className={
         "relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border " +
         (light ? (on ? "border-gold-light bg-white text-accent" : "border-gold-light text-white") : on ? "border-primary bg-primary text-white" : "border-gold bg-card text-primary")

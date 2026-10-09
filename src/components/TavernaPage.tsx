@@ -103,7 +103,7 @@ export function TavernaPage({ area }: { area: Area }) {
       .map((m) => (m.author_role === "admin" ? "admin" : `u${m.user_id}`))
       .concat("admin"), // l'admin si conta sempre: si parte da 1
   ).size;
-  const [showWriters, setShowWriters] = useState(false);
+  const [showWriters, setShowWriters] = useState(true);
 
   // quando arriva un messaggio nuovo si scende in fondo
   useEffect(() => {
@@ -208,7 +208,7 @@ export function TavernaPage({ area }: { area: Area }) {
           count={writers}
           light={area === "admin"}
           onToggle={() => setShowWriters((v) => !v)}
-          label={showWriters ? `${writers} condor: chi ha scritto nelle ultime 12 ore, admin compreso. Tocca per tornare a 20` : "Mostra un condor per chi ha scritto nelle ultime 12 ore"}
+          label={showWriters ? `${writers} condor: chi ha scritto nelle ultime 12 ore, admin compreso. Tocca per vederne 20` : "Mostra un condor per chi ha scritto nelle ultime 12 ore"}
         />
       }>
       <div className="h-[262px]" aria-hidden="true" />

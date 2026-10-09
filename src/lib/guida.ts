@@ -73,7 +73,7 @@ export const GUIDA_USER: GuidaSezione[] = [
       "Un'unica chat per tutti, admin compreso. I messaggi spariscono dopo 24 ore.",
       "Per rivolgerti a qualcuno scrivi @ e scegli il nome dal menù (lo indovina anche se lo scrivi male). Il nome diventa un blocchetto colorato e quella persona riceve una notifica.",
       "Toccando il nome di chi ha scritto, gli rispondi direttamente.",
-      "Il tasto con gli uccellini in alto: i condor intorno alla torre diventano quanti hanno scritto nelle ultime 12 ore.",
+      "I condor intorno alla torre sono quanti hanno scritto nelle ultime 12 ore. Il tasto con gli uccellini in alto li porta a 20 (toccalo di nuovo per tornare).",
     ],
   },
   {
@@ -130,7 +130,7 @@ export const GUIDA_ADMIN: GuidaSezione[] = [
       "In alto: eventi in programma, persone che devono ancora rispondere, danni e oggetti persi.",
       "«Prossimi eventi» (con «+ Nuovo»), «Dal campo» con le ultime notifiche, e le altre stanze: Shout, Report, Archivio, Notifiche.",
       "«Fai report del mese»: scarica il report del mese in corso più la copia di sicurezza dell'app.",
-      "Il tasto con l'omino e gli uccellini: i condor intorno alla torre diventano quanti user hai.",
+      "I condor intorno alla torre sono quanti user hai. Il tasto con l'omino e gli uccellini li porta a 20 (toccalo di nuovo per tornare).",
     ],
   },
   {
