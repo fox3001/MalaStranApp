@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, BellButton, useLogout } from "@/components/AppShell";
+import { HelpButton } from "@/components/HelpButton";
 import { ShoutIcon } from "@/components/ShoutIcon";
 import { Sigillo } from "@/components/Sigillo";
 import { ArcaneCircle, ErrorBox, Loading, ShieldDate, Tile, Wordmark } from "@/components/ui-kit";
@@ -34,6 +35,7 @@ function UserHome() {
           <button type="button" onClick={() => void logout()} className="min-h-11 border border-gold px-3 font-display text-[10px] uppercase tracking-[0.16em] text-primary">
             Esci
           </button>
+          <HelpButton area="user" />
           <BellButton area="user" />
         </span>
       </header>

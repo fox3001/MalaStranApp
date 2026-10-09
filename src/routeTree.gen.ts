@@ -13,12 +13,14 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminArchivioRouteImport } from './routes/admin.archivio'
 import { Route as AdminCalendarioRouteImport } from './routes/admin.calendario'
+import { Route as AdminGuidaRouteImport } from './routes/admin.guida'
 import { Route as AdminNotificheRouteImport } from './routes/admin.notifiche'
 import { Route as AdminReportRouteImport } from './routes/admin.report'
 import { Route as AdminShoutRouteImport } from './routes/admin.shout'
 import { Route as AdminTavernaRouteImport } from './routes/admin.taverna'
 import { Route as UIndexRouteImport } from './routes/u.index'
 import { Route as UCalendarioRouteImport } from './routes/u.calendario'
+import { Route as UGuidaRouteImport } from './routes/u.guida'
 import { Route as UNotificheRouteImport } from './routes/u.notifiche'
 import { Route as UPresenzeRouteImport } from './routes/u.presenze'
 import { Route as UProfiloRouteImport } from './routes/u.profilo'
@@ -53,6 +55,11 @@ const AdminCalendarioRoute = AdminCalendarioRouteImport.update({
   path: '/admin/calendario',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminGuidaRoute = AdminGuidaRouteImport.update({
+  id: '/admin/guida',
+  path: '/admin/guida',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminNotificheRoute = AdminNotificheRouteImport.update({
   id: '/admin/notifiche',
   path: '/admin/notifiche',
@@ -81,6 +88,11 @@ const UIndexRoute = UIndexRouteImport.update({
 const UCalendarioRoute = UCalendarioRouteImport.update({
   id: '/u/calendario',
   path: '/u/calendario',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UGuidaRoute = UGuidaRouteImport.update({
+  id: '/u/guida',
+  path: '/u/guida',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UNotificheRoute = UNotificheRouteImport.update({
@@ -153,11 +165,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin/archivio': typeof AdminArchivioRoute
   '/admin/calendario': typeof AdminCalendarioRoute
+  '/admin/guida': typeof AdminGuidaRoute
   '/admin/notifiche': typeof AdminNotificheRoute
   '/admin/report': typeof AdminReportRoute
   '/admin/shout': typeof AdminShoutRoute
   '/admin/taverna': typeof AdminTavernaRoute
   '/u/calendario': typeof UCalendarioRoute
+  '/u/guida': typeof UGuidaRoute
   '/u/notifiche': typeof UNotificheRoute
   '/u/presenze': typeof UPresenzeRoute
   '/u/profilo': typeof UProfiloRoute
@@ -178,11 +192,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin/archivio': typeof AdminArchivioRoute
   '/admin/calendario': typeof AdminCalendarioRoute
+  '/admin/guida': typeof AdminGuidaRoute
   '/admin/notifiche': typeof AdminNotificheRoute
   '/admin/report': typeof AdminReportRoute
   '/admin/shout': typeof AdminShoutRoute
   '/admin/taverna': typeof AdminTavernaRoute
   '/u/calendario': typeof UCalendarioRoute
+  '/u/guida': typeof UGuidaRoute
   '/u/notifiche': typeof UNotificheRoute
   '/u/presenze': typeof UPresenzeRoute
   '/u/profilo': typeof UProfiloRoute
@@ -204,11 +220,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin/archivio': typeof AdminArchivioRoute
   '/admin/calendario': typeof AdminCalendarioRoute
+  '/admin/guida': typeof AdminGuidaRoute
   '/admin/notifiche': typeof AdminNotificheRoute
   '/admin/report': typeof AdminReportRoute
   '/admin/shout': typeof AdminShoutRoute
   '/admin/taverna': typeof AdminTavernaRoute
   '/u/calendario': typeof UCalendarioRoute
+  '/u/guida': typeof UGuidaRoute
   '/u/notifiche': typeof UNotificheRoute
   '/u/presenze': typeof UPresenzeRoute
   '/u/profilo': typeof UProfiloRoute
@@ -231,11 +249,13 @@ export interface FileRouteTypes {
     | '/'
     | '/admin/archivio'
     | '/admin/calendario'
+    | '/admin/guida'
     | '/admin/notifiche'
     | '/admin/report'
     | '/admin/shout'
     | '/admin/taverna'
     | '/u/calendario'
+    | '/u/guida'
     | '/u/notifiche'
     | '/u/presenze'
     | '/u/profilo'
@@ -256,11 +276,13 @@ export interface FileRouteTypes {
     | '/'
     | '/admin/archivio'
     | '/admin/calendario'
+    | '/admin/guida'
     | '/admin/notifiche'
     | '/admin/report'
     | '/admin/shout'
     | '/admin/taverna'
     | '/u/calendario'
+    | '/u/guida'
     | '/u/notifiche'
     | '/u/presenze'
     | '/u/profilo'
@@ -281,11 +303,13 @@ export interface FileRouteTypes {
     | '/'
     | '/admin/archivio'
     | '/admin/calendario'
+    | '/admin/guida'
     | '/admin/notifiche'
     | '/admin/report'
     | '/admin/shout'
     | '/admin/taverna'
     | '/u/calendario'
+    | '/u/guida'
     | '/u/notifiche'
     | '/u/presenze'
     | '/u/profilo'
@@ -307,11 +331,13 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminArchivioRoute: typeof AdminArchivioRoute
   AdminCalendarioRoute: typeof AdminCalendarioRoute
+  AdminGuidaRoute: typeof AdminGuidaRoute
   AdminNotificheRoute: typeof AdminNotificheRoute
   AdminReportRoute: typeof AdminReportRoute
   AdminShoutRoute: typeof AdminShoutRoute
   AdminTavernaRoute: typeof AdminTavernaRoute
   UCalendarioRoute: typeof UCalendarioRoute
+  UGuidaRoute: typeof UGuidaRoute
   UNotificheRoute: typeof UNotificheRoute
   UPresenzeRoute: typeof UPresenzeRoute
   UProfiloRoute: typeof UProfiloRoute
@@ -359,6 +385,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCalendarioRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/guida': {
+      id: '/admin/guida'
+      path: '/admin/guida'
+      fullPath: '/admin/guida'
+      preLoaderRoute: typeof AdminGuidaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/notifiche': {
       id: '/admin/notifiche'
       path: '/admin/notifiche'
@@ -399,6 +432,13 @@ declare module '@tanstack/react-router' {
       path: '/u/calendario'
       fullPath: '/u/calendario'
       preLoaderRoute: typeof UCalendarioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/u/guida': {
+      id: '/u/guida'
+      path: '/u/guida'
+      fullPath: '/u/guida'
+      preLoaderRoute: typeof UGuidaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/u/notifiche': {
@@ -499,11 +539,13 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminArchivioRoute: AdminArchivioRoute,
   AdminCalendarioRoute: AdminCalendarioRoute,
+  AdminGuidaRoute: AdminGuidaRoute,
   AdminNotificheRoute: AdminNotificheRoute,
   AdminReportRoute: AdminReportRoute,
   AdminShoutRoute: AdminShoutRoute,
   AdminTavernaRoute: AdminTavernaRoute,
   UCalendarioRoute: UCalendarioRoute,
+  UGuidaRoute: UGuidaRoute,
   UNotificheRoute: UNotificheRoute,
   UPresenzeRoute: UPresenzeRoute,
   UProfiloRoute: UProfiloRoute,

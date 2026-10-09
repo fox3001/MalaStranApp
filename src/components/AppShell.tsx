@@ -2,6 +2,7 @@ import { Link, useLocation, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { HelpButton } from "@/components/HelpButton";
 import { api, getToken, setToken, useNotifications, type TavernaMessage } from "@/lib/api";
 
 export interface AppShellProps {
@@ -166,6 +167,7 @@ export function AppShell({ area, title, children, back, eyebrow, below, plainHea
               <h1 className="truncate font-display text-[21px] font-bold leading-tight tracking-[0.04em] text-white">{title}</h1>
             </div>
             {headerExtra}
+            <HelpButton area="admin" light />
             <BellButton area="admin" light />
           </div>
         </header>
@@ -178,6 +180,7 @@ export function AppShell({ area, title, children, back, eyebrow, below, plainHea
               <h1 className="truncate font-display text-xl font-bold leading-tight text-primary">{title}</h1>
             </div>
             {headerExtra}
+            <HelpButton area="user" />
             <BellButton area="user" />
           </div>
         </header>

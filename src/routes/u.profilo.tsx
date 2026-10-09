@@ -108,7 +108,10 @@ function ProfileForm({ user }: { user: User }) {
         </form>
       </Card>
 
-      <Button type="button" variant="outline" full className="mt-6" onClick={() => void logout()}>
+      <Link to="/u/guida" className="mt-6 block min-h-11 border border-gold bg-card px-3 py-3 text-center font-display text-[11px] uppercase tracking-[0.16em] text-accent">
+        Come funziona l'app
+      </Link>
+      <Button type="button" variant="outline" full className="mt-3" onClick={() => void logout()}>
         Esci
       </Button>
     </>

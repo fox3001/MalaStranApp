@@ -139,7 +139,10 @@ function AdminHome() {
               />
             </nav>
             <FaiReportButton className="mt-2.5" />
-            <button type="button" onClick={() => void logout()} className="mx-auto mt-5 block font-display text-[11px] uppercase tracking-[0.18em] text-muted-foreground underline underline-offset-4">
+            <Link to="/admin/guida" className="mx-auto mt-5 block text-center font-display text-[11px] uppercase tracking-[0.18em] text-accent underline underline-offset-4">
+              Come funziona l'app
+            </Link>
+            <button type="button" onClick={() => void logout()} className="mx-auto mt-3 block font-display text-[11px] uppercase tracking-[0.18em] text-muted-foreground underline underline-offset-4">
               Esci
             </button>
           </section>
